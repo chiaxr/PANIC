@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>PANIC</title>
+    <style>
+        :root { color-scheme: dark; }
+        html, body {
+            margin: 0; padding: 0; height: 100%; background: #121316; color: #e6e8ec;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            overflow: hidden;
+        }
+        #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+        canvas.emscripten {
+            display: block; width: 100vw; height: 100vh; border: 0;
+            image-rendering: auto; touch-action: none; outline: none;
+        }
+        #rotate {
+            position: fixed; inset: 0; display: none; z-index: 10;
+            align-items: center; justify-content: center; text-align: center;
+            background: #121316; padding: 24px;
+        }
+        #rotate p { font-size: 1.1rem; color: #b6bcc8; max-width: 20rem; line-height: 1.5; }
+        #manual-link {
+            position: fixed; top: 10px; right: 14px; z-index: 20;
+            font-size: 0.85rem; color: #8a90a0; text-decoration: none;
+            background: rgba(0,0,0,0.35); padding: 6px 10px; border-radius: 6px;
+        }
+        #manual-link:hover { color: #e6e8ec; }
+    </style>
+</head>
+<body>
+    <a id="manual-link" href="manual.html" target="_blank" rel="noopener">Defuser Manual &#8599;</a>
+    <div id="wrap">
+        <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+    </div>
+    <div id="rotate"><p>Rotate your device to landscape to defuse the bomb.</p></div>
+
+    <script type="text/javascript">
+        var Module = {
+            canvas: (function () { return document.getElementById('canvas'); })(),
+            // Optional orientation hook consulted by the C++ web loop.
+            __panicIsPortrait: function () {
+                var portrait = window.innerHeight > window.innerWidth;
+                document.getElementById('rotate').style.display = portrait ? 'flex' : 'none';
+                return portrait;
+            }
+        };
+    </script>
+    {{{ SCRIPT }}}
+</body>
+</html>
