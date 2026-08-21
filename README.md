@@ -28,9 +28,17 @@ Every bomb fills its six bays with a random selection of modules:
 | Keypads | Presses four symbols in the order one manual column lists them |
 | Passwords | Cycles five letter wheels to the only spellable word, then submits |
 | Memory | Presses one of four numbered buttons across five stages, referring back to earlier ones |
+| Simon Says | Repeats a flashing colour sequence, remapped by serial vowel and strike count |
+| Who's on First | Reads one button's label, then presses the first label on that label's priority list |
+| Morse Code | Decodes a blinking word and transmits its frequency |
 
 The Expert looks the rules up in the manual and talks the Defuser through them. A wrong move earns
 a strike.
+
+PANIC follows the same module *mechanics* as *Keep Talking and Nobody Explodes*, but every lookup
+table — keypad symbol columns, Who's on First words and priority lists, Simon's colour mappings,
+Morse frequencies — is PANIC's own, generated and checked for solvability. Use this repository's
+manual, not any other.
 
 ## Controls
 

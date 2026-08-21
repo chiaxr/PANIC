@@ -81,6 +81,9 @@
                 <li><a href="#keypads">Keypads</a></li>
                 <li><a href="#passwords">Passwords</a></li>
                 <li><a href="#memory">Memory</a></li>
+                <li><a href="#simon">Simon Says</a></li>
+                <li><a href="#whos-on-first">Who's on First</a></li>
+                <li><a href="#morse">Morse Code</a></li>
             </ol>
         </nav>
 
@@ -285,6 +288,134 @@
                 <tr><td>2</td><td>the button with the <strong>same label</strong> as stage 2</td></tr>
                 <tr><td>3</td><td>the button with the <strong>same label</strong> as stage 4</td></tr>
                 <tr><td>4</td><td>the button with the <strong>same label</strong> as stage 3</td></tr>
+            </table>
+        </section>
+
+        <section id="simon">
+            <h2>Module &mdash; Simon Says</h2>
+            <p class="lead">Four coloured buttons flash a sequence. Press the buttons the table
+            says to press &mdash; <strong>not</strong> the colours that flashed.</p>
+
+            <div class="note">Ask whether the <strong>serial number contains a vowel</strong>
+            (A, E, I, O or U), then use the matching table. The column depends on how many
+            <strong>strikes</strong> the bomb has taken <em>right now</em> &mdash; a strike changes
+            the answers, so re-read the table after one.</div>
+
+            <p>The sequence gains a flash each time it is answered correctly, four times over.
+            Repeat the whole sequence from the start each round.</p>
+
+            <h3>If the serial number contains a vowel</h3>
+            <table>
+                <tr><th>Flashing colour</th><th>No strikes</th><th>1 strike</th><th>2 strikes</th></tr>
+                <tr><td><span class="swatch red"></span>Red</td><td>Yellow</td><td>Yellow</td><td>Yellow</td></tr>
+                <tr><td><span class="swatch blue"></span>Blue</td><td>Blue</td><td>Green</td><td>Red</td></tr>
+                <tr><td><span class="swatch green"></span>Green</td><td>Red</td><td>Green</td><td>Yellow</td></tr>
+                <tr><td><span class="swatch yellow"></span>Yellow</td><td>Yellow</td><td>Blue</td><td>Blue</td></tr>
+            </table>
+
+            <h3>If the serial number does not contain a vowel</h3>
+            <table>
+                <tr><th>Flashing colour</th><th>No strikes</th><th>1 strike</th><th>2 strikes</th></tr>
+                <tr><td><span class="swatch red"></span>Red</td><td>Blue</td><td>Yellow</td><td>Red</td></tr>
+                <tr><td><span class="swatch blue"></span>Blue</td><td>Yellow</td><td>Red</td><td>Green</td></tr>
+                <tr><td><span class="swatch green"></span>Green</td><td>Red</td><td>Green</td><td>Blue</td></tr>
+                <tr><td><span class="swatch yellow"></span>Yellow</td><td>Red</td><td>Green</td><td>Green</td></tr>
+            </table>
+        </section>
+
+        <section id="whos-on-first">
+            <h2>Module &mdash; Who's on First</h2>
+            <p class="lead">A word in the display, six labelled buttons, three stages.</p>
+
+            <div class="note"><strong>Step 1.</strong> Look up the display word below. It names a
+            button &mdash; do not press it, just read its label aloud.
+            <strong>Step 2.</strong> Find that label in the second table and read its list left to
+            right. Press the <em>first</em> label on that list which appears on the module.</div>
+
+            <h3>Step 1 &mdash; the display word names a button</h3>
+            <table>
+                <tr><th>Display reads</th><th>Read the label on the</th></tr>
+                <tr><td class="k">BLANK</td><td>bottom right</td></tr>
+                <tr><td class="k">EMPTY</td><td>middle left</td></tr>
+                <tr><td class="k">FILLED</td><td>bottom left</td></tr>
+                <tr><td class="k">LEFT</td><td>middle right</td></tr>
+                <tr><td class="k">RIGHT</td><td>middle right</td></tr>
+                <tr><td class="k">UPPER</td><td>middle left</td></tr>
+                <tr><td class="k">LOWER</td><td>bottom right</td></tr>
+                <tr><td class="k">TOP</td><td>middle left</td></tr>
+                <tr><td class="k">BOTTOM</td><td>top right</td></tr>
+                <tr><td class="k">CENTRE</td><td>middle left</td></tr>
+                <tr><td class="k">FIRST</td><td>bottom left</td></tr>
+                <tr><td class="k">LAST</td><td>bottom left</td></tr>
+                <tr><td class="k">SINGLE</td><td>middle right</td></tr>
+                <tr><td class="k">DOUBLE</td><td>middle left</td></tr>
+                <tr><td class="k">TRIPLE</td><td>middle right</td></tr>
+                <tr><td class="k">LIGHT</td><td>top left</td></tr>
+                <tr><td class="k">DARK</td><td>bottom right</td></tr>
+                <tr><td class="k">OPEN</td><td>middle right</td></tr>
+                <tr><td class="k">SHUT</td><td>middle left</td></tr>
+                <tr><td class="k">PLAIN</td><td>top right</td></tr>
+            </table>
+
+            <h3>Step 2 &mdash; that label gives a priority list</h3>
+            <table>
+                <tr><th>Label</th><th>Press the first of these that is on the module</th></tr>
+                <tr><td class="k">READY</td><td>GO, READY, YEP, NEXT, NEVER, WAIT, LATER, SURE, STEADY, STOP, MAYBE, NOW, HOLD, NOPE</td></tr>
+                <tr><td class="k">STEADY</td><td>READY, GO, NOW, LATER, HOLD, YEP, STOP, SURE, NEVER, NEXT, NOPE, STEADY, WAIT, MAYBE</td></tr>
+                <tr><td class="k">HOLD</td><td>YEP, GO, HOLD, NOPE, MAYBE, LATER, STOP, NEVER, NEXT, WAIT, SURE, READY, NOW, STEADY</td></tr>
+                <tr><td class="k">WAIT</td><td>NEXT, READY, NOPE, SURE, LATER, STEADY, HOLD, YEP, WAIT, MAYBE, NEVER, STOP, NOW, GO</td></tr>
+                <tr><td class="k">NOW</td><td>STOP, NEXT, NOW, READY, GO, LATER, HOLD, NOPE, WAIT, MAYBE, STEADY, YEP, NEVER, SURE</td></tr>
+                <tr><td class="k">LATER</td><td>WAIT, NOPE, NOW, YEP, LATER, NEVER, STEADY, MAYBE, SURE, STOP, HOLD, GO, READY, NEXT</td></tr>
+                <tr><td class="k">NEVER</td><td>NEXT, STOP, NOPE, SURE, NEVER, GO, HOLD, NOW, READY, YEP, MAYBE, WAIT, STEADY, LATER</td></tr>
+                <tr><td class="k">MAYBE</td><td>LATER, SURE, WAIT, NEVER, MAYBE, NOW, READY, STOP, STEADY, GO, HOLD, NOPE, NEXT, YEP</td></tr>
+                <tr><td class="k">SURE</td><td>MAYBE, READY, YEP, NOPE, LATER, STOP, STEADY, GO, SURE, WAIT, NEVER, NOW, HOLD, NEXT</td></tr>
+                <tr><td class="k">NOPE</td><td>GO, YEP, SURE, NOPE, HOLD, READY, LATER, NEVER, NOW, WAIT, STOP, STEADY, MAYBE, NEXT</td></tr>
+                <tr><td class="k">YEP</td><td>STEADY, NEVER, SURE, LATER, STOP, WAIT, YEP, NOPE, MAYBE, READY, NEXT, NOW, GO, HOLD</td></tr>
+                <tr><td class="k">STOP</td><td>NOW, STOP, MAYBE, STEADY, NEXT, READY, SURE, GO, NOPE, WAIT, YEP, NEVER, LATER, HOLD</td></tr>
+                <tr><td class="k">GO</td><td>GO, NEVER, STOP, NEXT, SURE, LATER, WAIT, NOPE, STEADY, MAYBE, HOLD, READY, NOW, YEP</td></tr>
+                <tr><td class="k">NEXT</td><td>NEVER, STOP, MAYBE, NOPE, LATER, NOW, SURE, READY, NEXT, GO, WAIT, STEADY, YEP, HOLD</td></tr>
+            </table>
+        </section>
+
+        <section id="morse">
+            <h2>Module &mdash; Morse Code</h2>
+            <p class="lead">A light blinks one word in Morse. Decode it, look up its frequency, tune
+            the dial with the arrows and press <span class="k">TX</span>.</p>
+
+            <div class="note">The light repeats forever with a long gap between repeats &mdash; that
+            gap marks the start of the word. Every word begins with a different letter, so the first
+            letter alone identifies it.</div>
+
+            <h3>Morse alphabet</h3>
+            <table>
+                <tr><td class="k">A&nbsp;.&#8722;</td><td class="k">B&nbsp;&#8722;...</td><td class="k">C&nbsp;&#8722;.&#8722;.</td><td class="k">D&nbsp;&#8722;..</td></tr>
+                <tr><td class="k">E&nbsp;.</td><td class="k">F&nbsp;..&#8722;.</td><td class="k">G&nbsp;&#8722;&#8722;.</td><td class="k">H&nbsp;....</td></tr>
+                <tr><td class="k">I&nbsp;..</td><td class="k">J&nbsp;.&#8722;&#8722;&#8722;</td><td class="k">K&nbsp;&#8722;.&#8722;</td><td class="k">L&nbsp;.&#8722;..</td></tr>
+                <tr><td class="k">M&nbsp;&#8722;&#8722;</td><td class="k">N&nbsp;&#8722;.</td><td class="k">O&nbsp;&#8722;&#8722;&#8722;</td><td class="k">P&nbsp;.&#8722;&#8722;.</td></tr>
+                <tr><td class="k">Q&nbsp;&#8722;&#8722;.&#8722;</td><td class="k">R&nbsp;.&#8722;.</td><td class="k">S&nbsp;...</td><td class="k">T&nbsp;&#8722;</td></tr>
+                <tr><td class="k">U&nbsp;..&#8722;</td><td class="k">V&nbsp;...&#8722;</td><td class="k">W&nbsp;.&#8722;&#8722;</td><td class="k">X&nbsp;&#8722;..&#8722;</td></tr>
+                <tr><td class="k">Y&nbsp;&#8722;.&#8722;&#8722;</td><td class="k">Z&nbsp;&#8722;&#8722;..</td><td></td><td></td></tr>
+            </table>
+
+            <h3>Word frequencies</h3>
+            <table>
+                <tr><th>Word</th><th>Frequency</th></tr>
+                <tr><td class="k">boxes</td><td>3.505 MHz</td></tr>
+                <tr><td class="k">clamp</td><td>3.510 MHz</td></tr>
+                <tr><td class="k">drift</td><td>3.515 MHz</td></tr>
+                <tr><td class="k">flint</td><td>3.520 MHz</td></tr>
+                <tr><td class="k">ghost</td><td>3.525 MHz</td></tr>
+                <tr><td class="k">hover</td><td>3.530 MHz</td></tr>
+                <tr><td class="k">ivory</td><td>3.535 MHz</td></tr>
+                <tr><td class="k">jolts</td><td>3.540 MHz</td></tr>
+                <tr><td class="k">knots</td><td>3.545 MHz</td></tr>
+                <tr><td class="k">lunar</td><td>3.550 MHz</td></tr>
+                <tr><td class="k">mirth</td><td>3.555 MHz</td></tr>
+                <tr><td class="k">noble</td><td>3.560 MHz</td></tr>
+                <tr><td class="k">optic</td><td>3.565 MHz</td></tr>
+                <tr><td class="k">prism</td><td>3.570 MHz</td></tr>
+                <tr><td class="k">quilt</td><td>3.575 MHz</td></tr>
+                <tr><td class="k">rusty</td><td>3.580 MHz</td></tr>
             </table>
         </section>
 
