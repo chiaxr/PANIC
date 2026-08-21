@@ -255,6 +255,13 @@ void Game::handle_pointer(float dt) {
         press_pos_ = pos;
         last_pos_ = pos;
         press_slot_ = pick_module(pos, press_pixel_);
+        if (focus_settled() && press_slot_ == focused_slot_) {
+            ModuleInput in;
+            in.pressed = true;
+            in.held = true;
+            in.pointer_pos = press_pixel_;
+            bomb_.send_input(focused_slot_, in);
+        }
     } else if (down && pointer_down_) {
         // Held: distinguish drag (rotate) from tap. Free-look only — a focused
         // module stays square to the camera.
@@ -268,6 +275,17 @@ void Game::handle_pointer(float dt) {
             free_pitch_ = pitch_;
         }
         last_pos_ = pos;
+
+        // A press that started on the focused module keeps reporting as held,
+        // which is what the press-and-hold modules watch.
+        if (focus_settled() && press_slot_ == focused_slot_) {
+            Vector2 pixel{};
+            ModuleInput in;
+            in.held = true;
+            in.pointer_pos =
+                (pick_module(pos, pixel) == focused_slot_) ? pixel : press_pixel_;
+            bomb_.send_input(focused_slot_, in);
+        }
     } else if (!down && pointer_down_) {
         // Release. A tap first focuses a module; only once the camera has
         // settled on it does a tap reach the module's own components.
@@ -278,6 +296,8 @@ void Game::handle_pointer(float dt) {
                     ModuleInput in;
                     in.tapped = true;
                     in.tap_pos = press_pixel_;
+                    in.released = true;
+                    in.pointer_pos = press_pixel_;
                     bomb_.send_input(press_slot_, in);
                 } else if (press_slot_ >= 0) {
                     begin_focus(press_slot_);   // straight to a neighbouring bay
@@ -288,6 +308,13 @@ void Game::handle_pointer(float dt) {
                 begin_focus(press_slot_);
             }
             // Mid-move taps are ignored.
+        } else if (focus_settled() && press_slot_ == focused_slot_) {
+            // Dragged rather than tapped, but the module still needs to know
+            // the hold ended (The Button releases on a moved pointer too).
+            ModuleInput in;
+            in.released = true;
+            in.pointer_pos = press_pixel_;
+            bomb_.send_input(press_slot_, in);
         }
         press_slot_ = -1;
         dragging_ = false;
@@ -562,7 +589,11 @@ void Game::update(float dt) {
             }
 
             handle_pointer(dt);
-            bomb_.update(dt);
+
+            BombContext ctx;
+            ctx.strikes = strikes_;
+            ctx.time_left = time_left_;
+            bomb_.update(dt, ctx);
             strikes_ += bomb_.take_strike_events();
 
             time_left_ -= dt;

@@ -25,12 +25,33 @@
 #include "bomb_attributes.h"
 
 // Side length, in pixels, of the square render target each module draws into.
-inline constexpr int module_tex_size = 320;
+// Sized for the text-heavy modules (Who's on First, Passwords, Memory), which
+// are unreadable in a bay at anything smaller.
+inline constexpr int module_tex_size = 512;
 
-// One frame of interaction for a module, already in module-local space.
+// One frame of interaction for a module, already in module-local space. Only
+// the focused module receives these; everything is in module pixels: [0, size).
+//
+// tapped is the discrete "clicked this thing" event most modules want. The
+// press/hold/release trio exists for the two press-and-hold modules (The Button
+// and the needy Capacitor Discharge) and always describes a single pointer —
+// no module ever asks for two contact points at once.
 struct ModuleInput {
-    bool tapped = false;  // a discrete tap landed on this module this frame
-    Vector2 tap_pos{0.0f, 0.0f};  // tap position in module pixels: [0, size)
+    bool tapped = false;   // press+release on the spot, no drag
+    Vector2 tap_pos{0.0f, 0.0f};
+
+    bool pressed = false;   // pointer went down this frame
+    bool held = false;      // pointer is still down
+    bool released = false;  // pointer came up this frame
+    Vector2 pointer_pos{0.0f, 0.0f};
+};
+
+// Live bomb state a module may need while playing. Distinct from
+// BombAttributes, which is fixed when the bomb is built: these change during
+// the round, so they are handed to update() rather than init().
+struct BombContext {
+    int strikes = 0;         // Simon Says picks its colour table from this
+    float time_left = 0.0f;  // seconds; The Button's release digit
 };
 
 class Puzzle {
@@ -43,8 +64,15 @@ public:
     // Derive puzzle variables from the bomb's attributes.
     virtual void init(const BombAttributes& attrs) = 0;
 
-    // Advance interaction. Called every frame while the game is running.
-    virtual void update(const ModuleInput& in, float dt) = 0;
+    // Advance interaction. Called every frame while the game is running, even
+    // for modules that are not focused (needy timers depend on this); `in` only
+    // carries pointer events when this module is the focused one.
+    virtual void update(const ModuleInput& in, const BombContext& ctx,
+                        float dt) = 0;
+
+    // Needy modules tick continuously and are never disarmed, so they are
+    // excluded from the bomb's solved/total accounting.
+    virtual bool is_needy() const { return false; }
 
     // Issue 2D draw calls into the currently-bound render target
     // (origin top-left, extent [0, module_tex_size] on both axes).

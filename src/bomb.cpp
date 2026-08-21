@@ -1,7 +1,9 @@
 #include "bomb.h"
 
+#include <algorithm>
 #include <array>
 #include <string>
+#include <vector>
 
 #include "raylib.h"
 #include "raymath.h"
@@ -32,6 +34,18 @@ constexpr float half_thick = 0.30f;    // half of the slab depth  (Z)
 constexpr float slot_half = 0.62f;        // half-size of a square module face
 constexpr float face_offset = 0.01f;    // push quads just outside the casing
 constexpr std::array<float, 3> slot_x = {-1.40f, 0.0f, 1.40f};
+constexpr size_t slot_count = 6;   // three front bays, three back
+
+// Every module template that can appear on a bomb, in a fixed order: bomb
+// generation shuffles this, and PuzzleRegistry::names() cannot be used for it
+// because an unordered_map's order is not reproducible from the bomb's seed.
+constexpr std::array<const char*, 1> module_templates = {
+    "Wires",
+};
+
+// Needy modules are never disarmed, so a bomb built only from them could never
+// be defused. Cap them so at least five bays are solvable.
+constexpr int max_needy_modules = 1;
 
 Color casing_color(BombColor c) {
     switch (c) {
@@ -89,7 +103,7 @@ void Bomb::setup(std::mt19937& rng) {
     register_builtin_puzzles();
 
     attrs_ = BombAttributes::random(rng);
-    build_slots();
+    build_slots(rng);
     build_info_panels();
 
     for (auto& slot : slots_) {
@@ -134,7 +148,7 @@ void Bomb::unload() {
     pending_.clear();
 }
 
-void Bomb::build_slots() {
+void Bomb::build_slots(std::mt19937& rng) {
     slots_.clear();
 
     auto make_slot = [](float x, bool front, std::unique_ptr<Puzzle> puzzle) {
@@ -151,15 +165,35 @@ void Bomb::build_slots() {
         return slot;
     };
 
-    auto& reg = PuzzleRegistry::instance();
+    const auto& reg = PuzzleRegistry::instance();
 
-    // All six bays are available for modules; this milestone fills one with Wires.
-    slots_.push_back(make_slot(slot_x[0], true, nullptr));
-    slots_.push_back(make_slot(slot_x[1], true, reg.create("Wires")));
-    slots_.push_back(make_slot(slot_x[2], true, nullptr));
-    slots_.push_back(make_slot(slot_x[0], false, nullptr));
-    slots_.push_back(make_slot(slot_x[1], false, nullptr));
-    slots_.push_back(make_slot(slot_x[2], false, nullptr));
+    // Draw six distinct templates for the six bays. Bays go empty only while
+    // there are fewer than six templates registered.
+    std::vector<const char*> pool(module_templates.begin(),
+                                  module_templates.end());
+    std::shuffle(pool.begin(), pool.end(), rng);
+
+    std::vector<std::unique_ptr<Puzzle>> chosen;
+    int needy = 0;
+    for (const char* name : pool) {
+        if (chosen.size() >= slot_count) break;
+        std::unique_ptr<Puzzle> puzzle = reg.create(name);
+        if (!puzzle) continue;
+        if (puzzle->is_needy()) {
+            if (needy >= max_needy_modules) continue;
+            ++needy;
+        }
+        chosen.push_back(std::move(puzzle));
+    }
+    chosen.resize(slot_count);   // pads with nullptr: empty bays
+    std::shuffle(chosen.begin(), chosen.end(), rng);
+
+    slots_.push_back(make_slot(slot_x[0], true, std::move(chosen[0])));
+    slots_.push_back(make_slot(slot_x[1], true, std::move(chosen[1])));
+    slots_.push_back(make_slot(slot_x[2], true, std::move(chosen[2])));
+    slots_.push_back(make_slot(slot_x[0], false, std::move(chosen[3])));
+    slots_.push_back(make_slot(slot_x[1], false, std::move(chosen[4])));
+    slots_.push_back(make_slot(slot_x[2], false, std::move(chosen[5])));
 }
 
 void Bomb::build_info_panels() {
@@ -205,11 +239,11 @@ void Bomb::send_input(int slot_index, const ModuleInput& in) {
     pending_[slot_index] = in;
 }
 
-void Bomb::update(float dt) {
+void Bomb::update(float dt, const BombContext& ctx) {
     for (size_t i = 0; i < slots_.size(); ++i) {
         Puzzle* p = slots_[i].puzzle.get();
         if (!p) continue;
-        p->update(pending_[i], dt);
+        p->update(pending_[i], ctx, dt);
         pending_[i] = ModuleInput{};
         while (p->consume_strike()) ++strike_events_;
     }
@@ -327,7 +361,7 @@ int Bomb::take_strike_events() {
 bool Bomb::all_solved() const {
     bool any = false;
     for (const auto& slot : slots_) {
-        if (!slot.puzzle) continue;
+        if (!slot.puzzle || slot.puzzle->is_needy()) continue;
         any = true;
         if (!slot.puzzle->is_solved()) return false;
     }
@@ -337,7 +371,7 @@ bool Bomb::all_solved() const {
 int Bomb::puzzle_module_count() const {
     int n = 0;
     for (const auto& slot : slots_) {
-        if (slot.puzzle) ++n;
+        if (slot.puzzle && !slot.puzzle->is_needy()) ++n;
     }
     return n;
 }
@@ -345,7 +379,9 @@ int Bomb::puzzle_module_count() const {
 int Bomb::solved_module_count() const {
     int n = 0;
     for (const auto& slot : slots_) {
-        if (slot.puzzle && slot.puzzle->is_solved()) ++n;
+        if (slot.puzzle && !slot.puzzle->is_needy() && slot.puzzle->is_solved()) {
+            ++n;
+        }
     }
     return n;
 }

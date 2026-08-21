@@ -7,13 +7,17 @@
 namespace {
 
 // Module-local layout (pixels within the module_tex_size square).
-constexpr float top = 46.0f;
-constexpr float bottom = 286.0f;
-constexpr float left_terminal = 22.0f;
-constexpr float right_terminal = 298.0f;
-constexpr float wire_left = 44.0f;
-constexpr float wire_right = 276.0f;
-constexpr float wire_thickness = 20.0f;
+constexpr float top = 74.0f;
+constexpr float bottom = 458.0f;
+constexpr float left_terminal = 35.0f;
+constexpr float right_terminal = 477.0f;
+constexpr float wire_left = 70.0f;
+constexpr float wire_right = 442.0f;
+constexpr float wire_thickness = 32.0f;
+constexpr float terminal_w = 32.0f;
+constexpr float terminal_h = 45.0f;
+constexpr float cut_gap = 38.0f;    // half-gap opened up by a cut
+constexpr float cut_droop = 10.0f;  // the free end sags
 
 Color wire_display_color(WiresPuzzle::WireColor c) {
     switch (c) {
@@ -113,7 +117,7 @@ int WiresPuzzle::solve_correct_wire(const BombAttributes& attrs) const {
 int WiresPuzzle::wire_at_pixel(Vector2 p) const {
     const int n = static_cast<int>(wires_.size());
     if (n == 0) return -1;
-    if (p.x < left_terminal - 6 || p.x > right_terminal + 6) return -1;
+    if (p.x < left_terminal - 10 || p.x > right_terminal + 10) return -1;
     if (p.y < top || p.y > bottom) return -1;
 
     const float slot = (bottom - top) / static_cast<float>(n);
@@ -122,8 +126,10 @@ int WiresPuzzle::wire_at_pixel(Vector2 p) const {
     return idx;
 }
 
-void WiresPuzzle::update(const ModuleInput& in, float dt) {
+void WiresPuzzle::update(const ModuleInput& in, const BombContext& ctx,
+                         float dt) {
     (void)dt;
+    (void)ctx;   // Wires depends only on the fixed bomb attributes
     if (is_solved() || !in.tapped) return;
 
     const int idx = wire_at_pixel(in.tap_pos);
@@ -142,7 +148,7 @@ void WiresPuzzle::draw() {
     const float slot = (bottom - top) / static_cast<float>(n);
 
     // Solved indicator LED in the corner.
-    DrawCircle(module_tex_size - 34, 30, 12,
+    DrawCircle(module_tex_size - 54, 48, 19,
                is_solved() ? Color{90, 220, 120, 255} : Color{60, 63, 70, 255});
 
     for (int i = 0; i < n; ++i) {
@@ -150,10 +156,14 @@ void WiresPuzzle::draw() {
         const Color col = wire_display_color(wires_[i].color);
 
         // Terminals (screw posts).
-        DrawRectangle(static_cast<int>(left_terminal) - 8,
-                      static_cast<int>(cy) - 14, 20, 28, Color{90, 92, 100, 255});
-        DrawRectangle(static_cast<int>(right_terminal) - 12,
-                      static_cast<int>(cy) - 14, 20, 28, Color{90, 92, 100, 255});
+        const int th = static_cast<int>(terminal_h);
+        const int tw = static_cast<int>(terminal_w);
+        DrawRectangle(static_cast<int>(left_terminal) - 13,
+                      static_cast<int>(cy) - th / 2, tw, th,
+                      Color{90, 92, 100, 255});
+        DrawRectangle(static_cast<int>(right_terminal) - 19,
+                      static_cast<int>(cy) - th / 2, tw, th,
+                      Color{90, 92, 100, 255});
 
         const Rectangle bar{wire_left, cy - wire_thickness * 0.5f,
                             wire_right - wire_left, wire_thickness};
@@ -165,11 +175,12 @@ void WiresPuzzle::draw() {
             // Cut: two stubs with a gap, the right end drooping slightly.
             const float mid = (wire_left + wire_right) * 0.5f;
             DrawRectangleRec(Rectangle{wire_left, cy - wire_thickness * 0.5f,
-                                       mid - wire_left - 24, wire_thickness},
+                                       mid - wire_left - cut_gap, wire_thickness},
                              Fade(col, 0.6f));
-            DrawRectangleRec(Rectangle{mid + 24, cy - wire_thickness * 0.5f + 6,
-                                       wire_right - mid - 24, wire_thickness},
-                             Fade(col, 0.6f));
+            DrawRectangleRec(
+                Rectangle{mid + cut_gap, cy - wire_thickness * 0.5f + cut_droop,
+                          wire_right - mid - cut_gap, wire_thickness},
+                Fade(col, 0.6f));
         }
     }
 }

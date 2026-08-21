@@ -16,7 +16,8 @@ public:
 
     const char* name() const override { return "Wires"; }
     void init(const BombAttributes& attrs) override;
-    void update(const ModuleInput& in, float dt) override;
+    void update(const ModuleInput& in, const BombContext& ctx,
+                float dt) override;
     void draw() override;
 
 private:

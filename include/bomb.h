@@ -60,8 +60,9 @@ class Bomb {
     // Queue a tap for the module in the given slot (module-local pixel coords).
     void send_input(int slot_index, const ModuleInput& in);
 
-    // Advance all modules; aggregate strike events and solved state.
-    void update(float dt);
+    // Advance all modules; aggregate strike events and solved state. Every
+    // module updates every frame, focused or not, so needy timers keep running.
+    void update(float dt, const BombContext& ctx);
 
     // Render each slot's / panel's 2D content into its RenderTexture. Call before
     // BeginDrawing.
@@ -76,12 +77,13 @@ class Bomb {
     const BombAttributes& attributes() const { return attrs_; }
 
     int take_strike_events(); // strikes raised since the last call
+    // Needy modules are never disarmed, so they sit outside all three of these.
     bool all_solved() const;
     int puzzle_module_count() const;
     int solved_module_count() const;
 
 private:
-    void build_slots();
+    void build_slots(std::mt19937& rng);
     void build_info_panels();
     void draw_info_panel(const InfoPanel& panel) const;
 
