@@ -2,12 +2,11 @@
 
 PANIC is a small 3D bomb-defusal game inspired by *Keep Talking and Nobody Explodes*. One player
 (the **Defuser**) sees the bomb but has no instructions; their teammate (the
-**Expert**) has access to the [manual](manual/index.html) but cannot see the bomb. They have to communicate with each other to disarm the bomb before the timer runs out.
+**Expert**) has access to the [manual](https://chiaxr.github.io/PANIC/manual.html) but cannot see the bomb. They have to communicate with each other to disarm the bomb before the timer runs out.
 
 [Try it here now!](https://chiaxr.github.io/PANIC/)
 
 ## Gameplay
-
 Rotate the bomb to inspect its faces and read the widgets aloud to your Expert. Each **module**
 must be disarmed before the countdown reaches zero. Three **strikes** and the bomb detonates.
 
@@ -28,10 +27,12 @@ tells the Defuser which to cut. A wrong cut earns a strike.
 
 | Input | Action |
 | --- | --- |
+| Arrow keys | Move the title-screen / end-screen selection |
+| Enter / Space / Mouse click / Tap | Activate the selected button |
+| Backspace | Leave Settings or Instructions |
 | Drag (mouse / one finger) | Rotate the bomb |
 | Mouse click / Tap on a module | Interact with it (e.g. cut a wire) |
-| R / Enter | Start a fresh bomb (after a defuse or detonation) |
-| Mouse click / Tap | Start a fresh bomb (on the win/loss screen) |
+| R | Start a fresh bomb (on the win/loss screen) |
 | Esc / window close | Quit the native desktop build |
 
 The web version is landscape-only. In portrait orientation the game pauses and a rotate prompt
