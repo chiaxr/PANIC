@@ -42,6 +42,16 @@
             vertical-align: middle; margin-right: 4px; border-radius: 2px; }
         .red { background: #d44040; } .blue { background: #4870dc; }
         .yellow { background: #e8d048; } .white { background: #ececf0; } .black { background: #222228; }
+        nav.toc { background: #fffdf8; border: 1px solid #d8d2c4; border-radius: 6px;
+            padding: 18px 26px; margin: 22px 0; }
+        nav.toc h2 { font-size: 1.1rem; border: 0; padding: 0; margin-bottom: 8px; }
+        nav.toc ol { margin: 0; padding-left: 22px; columns: 2; }
+        nav.toc a { color: inherit; }
+        .sym { font-family: 'Courier New', monospace; font-weight: bold;
+            font-size: 1.35rem; letter-spacing: 0.18em; }
+        table.cols td.sym { text-align: center; letter-spacing: 0; padding: 6px 4px; }
+        .wordlist { font-family: 'Courier New', monospace; columns: 5; margin: 12px 0;
+            font-size: 0.95rem; }
         footer { text-align: center; color: #8a857c; font-size: 0.85rem; padding: 20px; }
         @media (prefers-color-scheme: dark) {
             body { background: #17161a; color: #e6e3dc; }
@@ -50,6 +60,7 @@
             th { background: #2a2930; } th, td { border-color: #35333a; }
             p.lead { color: #a39f97; }
             .note { background: #262027; }
+            nav.toc { background: #201f24; border-color: #35333a; }
             header { background: #0e0d10; }
         }
     </style>
@@ -61,6 +72,18 @@
     </header>
 
     <main>
+        <nav class="toc">
+            <h2>Modules</h2>
+            <ol>
+                <li><a href="#widgets">Bomb-Wide Information</a></li>
+                <li><a href="#wires">Wires</a></li>
+                <li><a href="#button">The Button</a></li>
+                <li><a href="#keypads">Keypads</a></li>
+                <li><a href="#passwords">Passwords</a></li>
+                <li><a href="#memory">Memory</a></li>
+            </ol>
+        </nav>
+
         <section>
             <h2>Before You Begin</h2>
             <p class="lead">The Expert has the manual. The Defuser has the bomb. Only the Defuser
@@ -70,7 +93,7 @@
             depend on bomb-wide information printed on the casing &mdash; ask the Defuser to read it out.</p>
         </section>
 
-        <section>
+        <section id="widgets">
             <h2>Bomb-Wide Information (Widgets)</h2>
             <p>These panels appear around the casing. They are not modules &mdash; you cannot interact
             with them &mdash; but modules refer to them.</p>
@@ -86,7 +109,7 @@
             otherwise <strong>unlit</strong>.</p>
         </section>
 
-        <section>
+        <section id="wires">
             <h2>Module &mdash; Wires</h2>
             <p class="lead">A panel of 3 to 6 coloured wires. Exactly one must be cut. Cutting the
             wrong wire earns a strike; the correct wire disarms the module.</p>
@@ -134,6 +157,135 @@
                 <li>Otherwise, if there are no <span class="k">red</span> wires, cut the <strong>last</strong> wire.</li>
                 <li>Otherwise, cut the <strong>fourth</strong> wire.</li>
             </ol>
+        </section>
+
+        <section id="button">
+            <h2>Module &mdash; The Button</h2>
+            <p class="lead">One big coloured button with a word on it. Ask the Defuser for both the
+            <strong>colour of the button</strong> and the <strong>word on it</strong>.</p>
+
+            <div class="note">Work down the list and stop at the <strong>first</strong> rule that
+            applies. Ignore every rule below it.</div>
+
+            <ol class="rules">
+                <li>If the button is <span class="k">blue</span> and says <span class="k">ABORT</span>, <strong>hold</strong> the button and read the strip.</li>
+                <li>Otherwise, if there is <strong>more than 1 battery</strong> and the button says <span class="k">DETONATE</span>, <strong>tap</strong> the button and release it immediately.</li>
+                <li>Otherwise, if the button is <span class="k">white</span> and there is a <strong>lit</strong> indicator reading <span class="k">CAR</span>, <strong>hold</strong> the button and read the strip.</li>
+                <li>Otherwise, if there are <strong>more than 2 batteries</strong> and there is a <strong>lit</strong> indicator reading <span class="k">FRK</span>, <strong>tap</strong> the button and release it immediately.</li>
+                <li>Otherwise, if the button is <span class="k">yellow</span>, <strong>hold</strong> the button and read the strip.</li>
+                <li>Otherwise, if the button is <span class="k">red</span> and says <span class="k">HOLD</span>, <strong>tap</strong> the button and release it immediately.</li>
+                <li>Otherwise, <strong>hold</strong> the button and read the strip.</li>
+            </ol>
+
+            <h3>Releasing a held button</h3>
+            <p>Holding the button lights a coloured strip beside it. Ask the Defuser for the strip
+            colour, then tell them to release the button when the <strong>countdown timer</strong>
+            has the matching digit in <em>any</em> position.</p>
+            <table>
+                <tr><th>Strip colour</th><th>Release when the timer shows</th></tr>
+                <tr><td><span class="swatch blue"></span>Blue</td><td>a <strong>4</strong> in any position</td></tr>
+                <tr><td><span class="swatch white"></span>White</td><td>a <strong>1</strong> in any position</td></tr>
+                <tr><td><span class="swatch yellow"></span>Yellow</td><td>a <strong>5</strong> in any position</td></tr>
+                <tr><td>Any other colour</td><td>a <strong>1</strong> in any position</td></tr>
+            </table>
+        </section>
+
+        <section id="keypads">
+            <h2>Module &mdash; Keypads</h2>
+            <p class="lead">Four symbols on four keys. Exactly one column below contains all four.
+            Press the four keys in the order they appear in that column, top to bottom.</p>
+
+            <div class="note">Only one column can contain all four symbols. Read the symbols to the
+            Expert, find the column, then press in <strong>column order</strong> &mdash; not the
+            order they sit on the keypad. A wrong key is a strike and restarts the sequence.</div>
+
+            <table class="cols">
+                <tr><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr>
+                <tr><td class="sym">!</td><td class="sym">@</td><td class="sym">'</td><td class="sym">)</td><td class="sym">(</td><td class="sym">]</td></tr>
+                <tr><td class="sym">&amp;</td><td class="sym">=</td><td class="sym">%</td><td class="sym">&lt;</td><td class="sym">&gt;</td><td class="sym">~</td></tr>
+                <tr><td class="sym">;</td><td class="sym">/</td><td class="sym">{</td><td class="sym">*</td><td class="sym">^</td><td class="sym">:</td></tr>
+                <tr><td class="sym">|</td><td class="sym">?</td><td class="sym">\</td><td class="sym">#</td><td class="sym">"</td><td class="sym">+</td></tr>
+                <tr><td class="sym">}</td><td class="sym">[</td><td class="sym">$</td><td class="sym">}</td><td class="sym">[</td><td class="sym">$</td></tr>
+                <tr><td class="sym">=</td><td class="sym">{</td><td class="sym">"</td><td class="sym">&amp;</td><td class="sym">'</td><td class="sym">&amp;</td></tr>
+                <tr><td class="sym">/</td><td class="sym">%</td><td class="sym">^</td><td class="sym">{</td><td class="sym">;</td><td class="sym">/</td></tr>
+            </table>
+        </section>
+
+        <section id="passwords">
+            <h2>Module &mdash; Passwords</h2>
+            <p class="lead">Five letter wheels and a SUBMIT button. Each wheel cycles through six
+            letters. Exactly one word from the list below can be spelled.</p>
+
+            <div class="note">Ask the Defuser to read out all six letters of the <strong>first</strong>
+            wheel. Cross off every word that does not start with one of them. Repeat with the second
+            wheel, and so on &mdash; usually two or three wheels are enough to leave one word.</div>
+
+            <div class="wordlist">
+                about<br>after<br>again<br>below<br>could<br>every<br>first<br>
+                found<br>great<br>house<br>large<br>learn<br>never<br>other<br>
+                place<br>plant<br>point<br>right<br>small<br>sound<br>spell<br>
+                still<br>study<br>their<br>there<br>these<br>thing<br>think<br>
+                three<br>water<br>where<br>which<br>world<br>would<br>write
+            </div>
+
+            <p>Set every wheel to spell the word, then press <span class="k">SUBMIT</span>. Submitting
+            the wrong word earns a strike.</p>
+        </section>
+
+        <section id="memory">
+            <h2>Module &mdash; Memory</h2>
+            <p class="lead">A big display over four numbered buttons, across five stages. Write down
+            what is pressed at every stage &mdash; later stages refer back to earlier ones.</p>
+
+            <div class="note"><strong>Position</strong> means which button, counting from the left
+            (1 to 4). <strong>Label</strong> means the number printed on the button. Record
+            <em>both</em> for every stage. A wrong press is a strike and sends the module back to
+            stage 1 with fresh numbers.</div>
+
+            <h3>Stage 1</h3>
+            <table>
+                <tr><th>Display</th><th>Press</th></tr>
+                <tr><td>1</td><td>the button in <strong>position 2</strong></td></tr>
+                <tr><td>2</td><td>the button in <strong>position 2</strong></td></tr>
+                <tr><td>3</td><td>the button in <strong>position 3</strong></td></tr>
+                <tr><td>4</td><td>the button in <strong>position 4</strong></td></tr>
+            </table>
+
+            <h3>Stage 2</h3>
+            <table>
+                <tr><th>Display</th><th>Press</th></tr>
+                <tr><td>1</td><td>the button labelled <strong>4</strong></td></tr>
+                <tr><td>2</td><td>the button in the <strong>same position</strong> as stage 1</td></tr>
+                <tr><td>3</td><td>the button in <strong>position 1</strong></td></tr>
+                <tr><td>4</td><td>the button in the <strong>same position</strong> as stage 1</td></tr>
+            </table>
+
+            <h3>Stage 3</h3>
+            <table>
+                <tr><th>Display</th><th>Press</th></tr>
+                <tr><td>1</td><td>the button with the <strong>same label</strong> as stage 2</td></tr>
+                <tr><td>2</td><td>the button with the <strong>same label</strong> as stage 1</td></tr>
+                <tr><td>3</td><td>the button in <strong>position 3</strong></td></tr>
+                <tr><td>4</td><td>the button labelled <strong>4</strong></td></tr>
+            </table>
+
+            <h3>Stage 4</h3>
+            <table>
+                <tr><th>Display</th><th>Press</th></tr>
+                <tr><td>1</td><td>the button in the <strong>same position</strong> as stage 1</td></tr>
+                <tr><td>2</td><td>the button in <strong>position 1</strong></td></tr>
+                <tr><td>3</td><td>the button in the <strong>same position</strong> as stage 2</td></tr>
+                <tr><td>4</td><td>the button in the <strong>same position</strong> as stage 2</td></tr>
+            </table>
+
+            <h3>Stage 5</h3>
+            <table>
+                <tr><th>Display</th><th>Press</th></tr>
+                <tr><td>1</td><td>the button with the <strong>same label</strong> as stage 1</td></tr>
+                <tr><td>2</td><td>the button with the <strong>same label</strong> as stage 2</td></tr>
+                <tr><td>3</td><td>the button with the <strong>same label</strong> as stage 4</td></tr>
+                <tr><td>4</td><td>the button with the <strong>same label</strong> as stage 3</td></tr>
+            </table>
         </section>
 
         <footer>PANIC &mdash; a Keep Talking and Nobody Explodes tribute. Manual revision 0.1.</footer>

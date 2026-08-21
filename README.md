@@ -19,9 +19,18 @@ only the Defuser can see:
 | Batteries | How many battery cells are shown |
 | Indicators | Which labelled lights (`CAR`, `FRK`, …) are lit vs unlit |
 
-The **Wires** module shows 3-6 coloured wires; exactly one must be cut. Which one depends on the
-wire colours, their count, and the serial number — the Expert looks it up in the manual and
-tells the Defuser which to cut. A wrong cut earns a strike.
+Every bomb fills its six bays with a random selection of modules:
+
+| Module | What the Defuser does |
+| --- | --- |
+| Wires | Cuts exactly one of 3-6 coloured wires |
+| The Button | Taps or holds a coloured button, releasing on the right countdown digit |
+| Keypads | Presses four symbols in the order one manual column lists them |
+| Passwords | Cycles five letter wheels to the only spellable word, then submits |
+| Memory | Presses one of four numbered buttons across five stages, referring back to earlier ones |
+
+The Expert looks the rules up in the manual and talks the Defuser through them. A wrong move earns
+a strike.
 
 ## Controls
 

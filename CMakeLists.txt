@@ -49,6 +49,10 @@ add_library(panic_game STATIC
     src/game.cpp
     src/bomb.cpp
     src/puzzles/wires_puzzle.cpp
+    src/puzzles/button_puzzle.cpp
+    src/puzzles/keypads_puzzle.cpp
+    src/puzzles/memory_puzzle.cpp
+    src/puzzles/passwords_puzzle.cpp
 )
 
 target_include_directories(panic_game PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

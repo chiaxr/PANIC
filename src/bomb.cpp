@@ -9,6 +9,10 @@
 #include "raymath.h"
 #include "rlgl.h"
 
+#include "puzzles/button_puzzle.h"
+#include "puzzles/keypads_puzzle.h"
+#include "puzzles/memory_puzzle.h"
+#include "puzzles/passwords_puzzle.h"
 #include "puzzles/wires_puzzle.h"
 
 // ---------------------------------------------------------------------------
@@ -21,8 +25,15 @@ void register_builtin_puzzles() {
     if (done) return;
     done = true;
 
-    PuzzleRegistry::instance().add(
-        "Wires", [] { return std::unique_ptr<Puzzle>(new WiresPuzzle()); });
+    PuzzleRegistry& reg = PuzzleRegistry::instance();
+    reg.add("Wires", [] { return std::unique_ptr<Puzzle>(new WiresPuzzle()); });
+    reg.add("The Button",
+            [] { return std::unique_ptr<Puzzle>(new ButtonPuzzle()); });
+    reg.add("Keypads",
+            [] { return std::unique_ptr<Puzzle>(new KeypadsPuzzle()); });
+    reg.add("Passwords",
+            [] { return std::unique_ptr<Puzzle>(new PasswordsPuzzle()); });
+    reg.add("Memory", [] { return std::unique_ptr<Puzzle>(new MemoryPuzzle()); });
 }
 
 namespace {
@@ -39,8 +50,12 @@ constexpr size_t slot_count = 6;   // three front bays, three back
 // Every module template that can appear on a bomb, in a fixed order: bomb
 // generation shuffles this, and PuzzleRegistry::names() cannot be used for it
 // because an unordered_map's order is not reproducible from the bomb's seed.
-constexpr std::array<const char*, 1> module_templates = {
+constexpr std::array<const char*, 5> module_templates = {
     "Wires",
+    "The Button",
+    "Keypads",
+    "Passwords",
+    "Memory",
 };
 
 // Needy modules are never disarmed, so a bomb built only from them could never
