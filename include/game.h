@@ -52,6 +52,11 @@ private:
     void update_difficulty_slider();
     void randomize_serial();
     bool serial_is_valid() const;
+    // Build the bomb from the current serial and difficulty.
+    void rebuild_bomb();
+    // Keep the title screen's backdrop showing the bomb the current seed would
+    // build, so pressing START changes nothing about how the bomb looks.
+    void refresh_menu_bomb();
     void update_instructions();
     void update_end_screen();
     void activate_menu_button(int idx);
@@ -121,6 +126,13 @@ private:
 
     // Engine used to roll a fresh serial; separate from the bomb's seeded one.
     std::mt19937 serial_rng_;
+
+    // What the bomb currently on screen was built from, and whether it is still
+    // untouched. A bomb that has been played has solved modules and strikes on
+    // it, so it cannot go back to being the menu backdrop.
+    std::string built_serial_;
+    int built_difficulty_ = -1;
+    bool bomb_pristine_ = false;
 
     bool paused_ = false;
 };

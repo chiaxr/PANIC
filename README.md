@@ -14,6 +14,9 @@ and each module's own variables — so noting the pair down replays exactly the 
 starts with a randomly generated serial; click it to edit. Difficulty sets how many of the six bays
 are filled, from 1 to 6.
 
+The bomb turning behind the title screen is that bomb: edit the serial or move the slider and it is
+rebuilt to match, so pressing START does not change what you are looking at.
+
 Rotate the bomb to inspect its faces and read the widgets aloud to your Expert. Each **module**
 must be disarmed before the countdown reaches zero. Three **strikes** and the bomb detonates.
 

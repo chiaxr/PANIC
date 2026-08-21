@@ -275,8 +275,28 @@ void Game::setup() {
     // what the players see is already the bomb they would get by pressing START.
     serial_rng_.seed(std::random_device{}());
     randomize_serial();
+    rebuild_bomb();
+}
+
+void Game::rebuild_bomb() {
+    bomb_.unload();
     rng_ = seeded_engine(serial_, difficulty_);
     bomb_.setup(rng_, serial_, difficulty_);
+
+    built_serial_ = serial_;
+    built_difficulty_ = difficulty_;
+    bomb_pristine_ = true;
+}
+
+void Game::refresh_menu_bomb() {
+    // A half-typed serial has no bomb to show; keep the last good one until it
+    // is complete again.
+    if (!serial_is_valid()) return;
+    if (bomb_pristine_ && built_serial_ == serial_ &&
+            built_difficulty_ == difficulty_) {
+        return;
+    }
+    rebuild_bomb();
 }
 
 void Game::unload() { bomb_.unload(); }
@@ -503,14 +523,17 @@ bool Game::serial_is_valid() const {
 }
 
 void Game::start_round() {
-    bomb_.unload();
-    rng_ = seeded_engine(serial_, difficulty_);
-    bomb_.setup(rng_, serial_, difficulty_);
+    // Always rebuild: the bomb on the menu may have been played already. The
+    // seed makes this deterministic, so when it is the same bomb the players
+    // were just looking at, it comes back looking exactly the same.
+    rebuild_bomb();
+    bomb_pristine_ = false;
 
     state_ = State::PLAYING;
     time_left_ = round_seconds;
     strikes_ = 0;
-    yaw_ = 0.5f;
+    // Keep the angle the bomb was already turning at, rather than snapping it
+    // back to a fixed pose the moment the round starts.
     pitch_ = -0.15f;
     end_selected_idx_ = 0;
 
@@ -581,6 +604,7 @@ void Game::update_menu() {
 
     update_serial_entry();
     update_difficulty_slider();
+    refresh_menu_bomb();
 
     if (IsKeyPressed(KEY_UP)) {
         menu_selected_idx_ = (menu_selected_idx_ - 1 + menu_count) % menu_count;
