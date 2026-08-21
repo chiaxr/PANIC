@@ -35,6 +35,15 @@ Every bomb fills its six bays with a random selection of modules:
 | Wire Sequences | Cuts wires across four panels, counting each colour as it goes |
 | Mazes | Steers a marker to the goal through walls only the Expert can see |
 
+Up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not
+counted in the module total — they wake up periodically for the whole round and demand attention:
+
+| Needy module | What the Defuser does |
+| --- | --- |
+| Venting Gas | Answers Y or N before the countdown runs out |
+| Capacitor Discharge | Holds a lever to drain a capacitor before it overloads |
+| Knobs | Turns a knob to the position the twelve lights call for |
+
 The Expert looks the rules up in the manual and talks the Defuser through them. A wrong move earns
 a strike.
 
