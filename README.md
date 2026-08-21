@@ -14,9 +14,6 @@ and each module's own variables — so noting the pair down replays exactly the 
 starts with a randomly generated serial; click it to edit. Difficulty sets how many of the six bays
 are filled, from 1 to 6.
 
-The bomb turning behind the title screen is that bomb: edit the serial or move the slider and it is
-rebuilt to match, so pressing START does not change what you are looking at.
-
 Rotate the bomb to inspect its faces and read the widgets aloud to your Expert. Each **module**
 must be disarmed before the countdown reaches zero. Three **strikes** and the bomb detonates.
 
@@ -68,14 +65,13 @@ manual, not any other.
 | --- | --- |
 | Arrow keys | Move the title-screen / end-screen selection |
 | Enter / Space / Mouse click / Tap | Activate the selected button |
-| Click the serial box | Edit the bomb serial; Enter or a click elsewhere finishes |
 | Left / Right arrows | Move the difficulty slider (it can also be dragged) |
 | Backspace | Leave Instructions; step back out of a focused module |
 | Drag (mouse / one finger) | Rotate the bomb (free look only) |
 | Mouse click / Tap on a module | Zoom in on it |
 | Mouse click / Tap on a focused module | Interact with it (e.g. cut a wire) |
 | Right-click / Tap away from the module | Step back out to free look |
-| R | Start a fresh bomb (on the win/loss screen) |
+| R | Roll a new serial and start a fresh bomb (on the win/loss screen) |
 | Esc / window close | Quit the native desktop build |
 
 The web version is landscape-only. In portrait orientation the game pauses and a rotate prompt

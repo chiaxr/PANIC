@@ -20,6 +20,9 @@ constexpr float menu_spin_speed = 0.25f;  // radians per second on the menu
 constexpr Vector3 camera_free_pos{0.0f, 0.0f, 8.0f};
 constexpr Vector3 camera_free_target{0.0f, 0.0f, 0.0f};
 constexpr float focus_time = 0.32f;         // seconds for the focus move
+constexpr float round_yaw = 0.5f;           // pose a round starts in
+constexpr float round_pitch = -0.15f;
+constexpr float settle_time = 0.7f;         // seconds to settle into that pose
 constexpr float focus_zoom_margin = 1.55f;  // >1 leaves air around the module
 
 // Shortest signed way round to an angle, so focusing never takes the long way.
@@ -367,6 +370,7 @@ void Game::handle_pointer(float dt) {
         const Vector2 delta = Vector2Subtract(pos, last_pos_);
         if (Vector2Distance(pos, press_pos_) > drag_threshold) dragging_ = true;
         if (dragging_ && focused_slot_ < 0) {
+            intro_t_ = 1.0f;   // the player is steering now
             yaw_ += delta.x * rot_speed;
             // Vertical drag is inverted: dragging down tips the top of the bomb away.
             pitch_ = Clamp(pitch_ + delta.y * rot_speed, -pitch_limit, pitch_limit);
@@ -438,6 +442,7 @@ void Game::begin_focus(int slot_index) {
 
     focused_slot_ = slot_index;
     focusing_ = true;
+    intro_t_ = 1.0f;
 
     // Turn the bay's outward normal towards the camera: front bays need no
     // yaw, back bays a half turn, and the pitch always flattens out.
@@ -532,10 +537,15 @@ void Game::start_round() {
     state_ = State::PLAYING;
     time_left_ = round_seconds;
     strikes_ = 0;
-    // Keep the angle the bomb was already turning at, rather than snapping it
-    // back to a fixed pose the moment the round starts.
-    pitch_ = -0.15f;
     end_selected_idx_ = 0;
+
+    // Settle into the round's pose from wherever the title screen's spin left
+    // the bomb. The menu winds yaw_ up without bound, so aim for the nearest
+    // rotation congruent to the target rather than unwinding all those turns.
+    intro_from_yaw_ = yaw_;
+    intro_from_pitch_ = pitch_;
+    intro_to_yaw_ = yaw_ + wrap_pi(round_yaw - yaw_);
+    intro_t_ = 0.0f;
 
     focused_slot_ = -1;
     focusing_ = false;
@@ -691,16 +701,26 @@ void Game::update_end_screen() {
         if (rect_hovered(end_button_rect(i, sw, top_y))) end_selected_idx_ = i;
     }
 
-    if (IsKeyPressed(KEY_R)) {
+    // A new bomb means a new seed. The serial stays on the HUD throughout, so
+    // the one just played can still be written down before moving on.
+    auto new_bomb = [this] {
+        randomize_serial();
         start_round();
+    };
+    auto to_menu = [this] {
+        menu_selected_idx_ = 0;
+        state_ = State::MENU;
+    };
+
+    if (IsKeyPressed(KEY_R)) {
+        new_bomb();
         return;
     }
     if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
         if (end_selected_idx_ == 0) {
-            start_round();
+            new_bomb();
         } else {
-            menu_selected_idx_ = 0;
-            state_ = State::MENU;
+            to_menu();
         }
         return;
     }
@@ -710,10 +730,9 @@ void Game::update_end_screen() {
     for (int i = 0; i < end_count; ++i) {
         if (!CheckCollisionPointRec(tap, end_button_rect(i, sw, top_y))) continue;
         if (i == 0) {
-            start_round();
+            new_bomb();
         } else {
-            menu_selected_idx_ = 0;
-            state_ = State::MENU;
+            to_menu();
         }
         return;
     }
@@ -738,6 +757,17 @@ void Game::update(float dt) {
             break;
 
         case State::PLAYING: {
+            // Focusing a module takes over the rotation, so the two tweens
+            // never run against each other.
+            if (settling() && focused_slot_ < 0) {
+                intro_t_ = std::min(1.0f, intro_t_ + dt / settle_time);
+                const float s = smoothstep01(intro_t_);
+                yaw_ = Lerp(intro_from_yaw_, intro_to_yaw_, s);
+                pitch_ = Lerp(intro_from_pitch_, round_pitch, s);
+                free_yaw_ = yaw_;
+                free_pitch_ = pitch_;
+            }
+
             if (focused_slot_ >= 0 && focusing_ &&
                     (IsKeyPressed(KEY_BACKSPACE) ||
                      IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))) {
@@ -973,6 +1003,12 @@ void Game::draw_hud() const {
     const char* prog = TextFormat("MODULES    %d / %d", bomb_.solved_module_count(),
                                   bomb_.puzzle_module_count());
     DrawText(prog, sw - 20 - MeasureText(prog, 22), 24, 22, col_text_dim);
+
+    // The seed that built this bomb, so it can be noted down and replayed. Both
+    // halves are needed: the serial alone does not identify the bomb.
+    const char* seed = TextFormat("SEED   %s  /  %d", serial_.c_str(),
+                                  difficulty_);
+    DrawText(seed, sw - 20 - MeasureText(seed, 18), 56, 18, col_hint);
 
     // Controls hint, bottom. What a tap does depends on the focus state.
     const char* hint =

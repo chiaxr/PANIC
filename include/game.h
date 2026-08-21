@@ -54,6 +54,8 @@ private:
     bool serial_is_valid() const;
     // Build the bomb from the current serial and difficulty.
     void rebuild_bomb();
+    // True while the round-opening rotation tween is still running.
+    bool settling() const { return intro_t_ < 1.0f; }
     // Keep the title screen's backdrop showing the bomb the current seed would
     // build, so pressing START changes nothing about how the bomb looks.
     void refresh_menu_bomb();
@@ -92,6 +94,13 @@ private:
     Vector2 last_pos_{};
     int press_slot_ = -1;
     Vector2 press_pixel_{};
+
+    // Round-opening tween: the bomb settles from wherever the title screen left
+    // it spinning to the pose a round starts in, rather than snapping there.
+    float intro_t_ = 1.0f;   // 1 = settled
+    float intro_from_yaw_ = 0.0f;
+    float intro_from_pitch_ = 0.0f;
+    float intro_to_yaw_ = 0.0f;
 
     // Module focus. focused_slot_ stays set while the move animates back out,
     // so free-look rotation stays locked until the camera is home again.
