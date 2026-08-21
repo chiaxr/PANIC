@@ -36,9 +36,8 @@ Rectangle key_rect(int idx) {
 
 } // namespace
 
-void KeypadsPuzzle::init(const BombAttributes& attrs) {
+void KeypadsPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // Keypads depends only on the symbols shown
-    std::mt19937 rng(std::random_device{}());
 
     const int col = std::uniform_int_distribution<int>(0, column_count - 1)(rng);
 

@@ -23,15 +23,12 @@ Rectangle button_rect(int idx) {
     return Rectangle{x, button_y, button_w, button_h};
 }
 
-std::mt19937& rng() {
-    static std::mt19937 engine(std::random_device{}());
-    return engine;
-}
 
 } // namespace
 
-void MemoryPuzzle::init(const BombAttributes& attrs) {
+void MemoryPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // Memory depends only on its own stage history
+    rng_.seed(rng());   // later stages are dealt during play, from this engine
     stage_ = 0;
     pressed_position_.fill(0);
     pressed_label_.fill(0);
@@ -40,8 +37,8 @@ void MemoryPuzzle::init(const BombAttributes& attrs) {
 
 void MemoryPuzzle::deal_stage() {
     for (int i = 0; i < button_count; ++i) labels_[static_cast<size_t>(i)] = i + 1;
-    std::shuffle(labels_.begin(), labels_.end(), rng());
-    display_ = std::uniform_int_distribution<int>(1, 4)(rng());
+    std::shuffle(labels_.begin(), labels_.end(), rng_);
+    display_ = std::uniform_int_distribution<int>(1, 4)(rng_);
 }
 
 int MemoryPuzzle::position_of_label(int label) const {

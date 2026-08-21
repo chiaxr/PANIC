@@ -67,24 +67,37 @@ struct BombAttributes {
         return n;
     }
 
-    // Randomized bomb generator. Deterministic if you seed the engine yourself.
-    static BombAttributes random(std::mt19937& rng) {
-        BombAttributes attrs;
+    // Number of characters in a serial number.
+    static constexpr int serial_length = 6;
 
-        attrs.color = static_cast<BombColor>(
-                std::uniform_int_distribution<int>(0, 4)(rng));
-
-        // Serial: 6 characters, letters + digits, guaranteed to end in a digit.
+    // A fresh serial: 6 characters, letters + digits, always ending in a digit
+    // so the "last digit" rules the modules lean on are always defined.
+    static std::string random_serial(std::mt19937& rng) {
         static const char letters[] = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
         static const char digits[] = "0123456789";
         std::uniform_int_distribution<int> letter(0, sizeof(letters) - 2);
         std::uniform_int_distribution<int> digit(0, sizeof(digits) - 2);
         std::uniform_int_distribution<int> coin(0, 1);
-        attrs.serial.clear();
-        for (int i = 0; i < 5; ++i) {
-            attrs.serial += coin(rng) ? letters[letter(rng)] : digits[digit(rng)];
+
+        std::string serial;
+        for (int i = 0; i < serial_length - 1; ++i) {
+            serial += coin(rng) ? letters[letter(rng)] : digits[digit(rng)];
         }
-        attrs.serial += digits[digit(rng)];  // final char is always a digit
+        serial += digits[digit(rng)];
+        return serial;
+    }
+
+    // Everything else about the bomb, derived from the serial's seeded engine.
+    // The serial is an input rather than a product: it is what the players type
+    // in to replay a bomb.
+    static BombAttributes random(std::mt19937& rng, const std::string& serial) {
+        BombAttributes attrs;
+        attrs.serial = serial;
+
+        attrs.color = static_cast<BombColor>(
+                std::uniform_int_distribution<int>(0, 4)(rng));
+
+        std::uniform_int_distribution<int> coin(0, 1);
 
         attrs.battery_count = std::uniform_int_distribution<int>(0, 4)(rng);
 

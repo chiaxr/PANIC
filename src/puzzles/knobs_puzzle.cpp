@@ -41,11 +41,11 @@ Rectangle knob_rect() {
 
 } // namespace
 
-void KnobsPuzzle::init(const BombAttributes& attrs) {
+void KnobsPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;
     pattern_ = patterns[0].pattern;
     position_ = KnobPosition::KNOB_UP;
-    reset_needy();
+    reset_needy(rng);
 }
 
 void KnobsPuzzle::on_activate() {

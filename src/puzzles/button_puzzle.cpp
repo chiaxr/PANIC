@@ -79,8 +79,7 @@ int ButtonPuzzle::strip_release_digit(StripColor strip) {
     return 1;
 }
 
-void ButtonPuzzle::init(const BombAttributes& attrs) {
-    std::mt19937 rng(std::random_device{}());
+void ButtonPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     color_ = static_cast<ButtonColor>(
         std::uniform_int_distribution<int>(0, 4)(rng));
     label_ = static_cast<ButtonLabel>(

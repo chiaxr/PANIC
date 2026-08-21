@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <random>
+#include <string>
 #include <vector>
 
 #include "raylib.h"
@@ -54,7 +55,14 @@ class Bomb {
     // Build attributes, lay out slots and rim panels, instantiate puzzle
     // templates, and create render targets. Call after the window/GL context
     // exists.
-    void setup(std::mt19937& rng);
+    //
+    // `rng` must already be seeded from the serial and difficulty: the same
+    // serial and module count always builds the same bomb. `module_count` is
+    // how many of the six bays get a module.
+    void setup(std::mt19937& rng, const std::string& serial, int module_count);
+
+    // Bays available on the casing; the difficulty slider picks 1..this many.
+    static constexpr int max_modules = 6;
     void unload();
 
     // Queue a tap for the module in the given slot (module-local pixel coords).
@@ -83,7 +91,7 @@ class Bomb {
     int solved_module_count() const;
 
 private:
-    void build_slots(std::mt19937& rng);
+    void build_slots(std::mt19937& rng, int module_count);
     void build_info_panels();
     void draw_info_panel(const InfoPanel& panel) const;
 

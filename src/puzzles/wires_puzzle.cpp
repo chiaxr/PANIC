@@ -32,8 +32,7 @@ Color wire_display_color(WiresPuzzle::WireColor c) {
 
 } // namespace
 
-void WiresPuzzle::init(const BombAttributes& attrs) {
-    std::mt19937 rng(std::random_device{}());
+void WiresPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     const int count = std::uniform_int_distribution<int>(3, 6)(rng);
     std::uniform_int_distribution<int> color_pick(0, 4);
 

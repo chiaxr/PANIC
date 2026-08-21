@@ -150,15 +150,16 @@ void draw_empty_bay() {
 
 }   // namespace
 
-void Bomb::setup(std::mt19937& rng) {
+void Bomb::setup(std::mt19937& rng, const std::string& serial,
+                 int module_count) {
     register_builtin_puzzles();
 
-    attrs_ = BombAttributes::random(rng);
-    build_slots(rng);
+    attrs_ = BombAttributes::random(rng, serial);
+    build_slots(rng, module_count);
     build_info_panels();
 
     for (auto& slot : slots_) {
-        if (slot.puzzle) slot.puzzle->init(attrs_);
+        if (slot.puzzle) slot.puzzle->init(attrs_, rng);
         slot.quad.tex = LoadRenderTexture(module_tex_size, module_tex_size);
         slot.quad.tex_valid = true;
     }
@@ -199,7 +200,7 @@ void Bomb::unload() {
     pending_.clear();
 }
 
-void Bomb::build_slots(std::mt19937& rng) {
+void Bomb::build_slots(std::mt19937& rng, int module_count) {
     slots_.clear();
 
     auto make_slot = [](float x, bool front, std::unique_ptr<Puzzle> puzzle) {
@@ -224,14 +225,23 @@ void Bomb::build_slots(std::mt19937& rng) {
                                   module_templates.end());
     std::shuffle(pool.begin(), pool.end(), rng);
 
+    // How many bays to fill, and how many of those may be needy: a bomb needs
+    // at least one module that can actually be disarmed, so the smallest bombs
+    // get no needy module at all.
+    const size_t wanted = static_cast<size_t>(
+        module_count < 1 ? 1 : (module_count > static_cast<int>(slot_count)
+                                    ? static_cast<int>(slot_count)
+                                    : module_count));
+    const int needy_allowed = wanted >= 3 ? max_needy_modules : 0;
+
     std::vector<std::unique_ptr<Puzzle>> chosen;
     int needy = 0;
     for (const char* name : pool) {
-        if (chosen.size() >= slot_count) break;
+        if (chosen.size() >= wanted) break;
         std::unique_ptr<Puzzle> puzzle = reg.create(name);
         if (!puzzle) continue;
         if (puzzle->is_needy()) {
-            if (needy >= max_needy_modules) continue;
+            if (needy >= needy_allowed) continue;
             ++needy;
         }
         chosen.push_back(std::move(puzzle));

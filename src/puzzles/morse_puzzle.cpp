@@ -55,9 +55,8 @@ Rectangle tx_rect() { return Rectangle{dial_x, tx_y, dial_w, tx_h}; }
 
 } // namespace
 
-void MorsePuzzle::init(const BombAttributes& attrs) {
+void MorsePuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // the blinked word decides everything
-    std::mt19937 rng(std::random_device{}());
     word_index_ = std::uniform_int_distribution<int>(0, word_count - 1)(rng);
     dial_index_ = std::uniform_int_distribution<int>(0, word_count - 1)(rng);
 

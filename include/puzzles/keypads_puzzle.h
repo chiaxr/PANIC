@@ -17,7 +17,7 @@ public:
     static constexpr int key_count = 4;
 
     const char* name() const override { return "Keypads"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;

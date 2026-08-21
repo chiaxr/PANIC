@@ -18,7 +18,7 @@ public:
     static constexpr int total_stages = 3;
 
     const char* name() const override { return "Who's on First"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
@@ -28,6 +28,7 @@ private:
     // 0-based index of the button that advances the current stage.
     int solve_correct_button() const;
 
+    std::mt19937 rng_;   // seeded from the bomb's engine in init()
     std::array<const char*, button_count> labels_{};
     const char* display_ = "";
     int stage_ = 0;

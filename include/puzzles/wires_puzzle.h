@@ -15,7 +15,7 @@ public:
         WIRE_RED, WIRE_BLUE, WIRE_YELLOW, WIRE_WHITE, WIRE_BLACK };
 
     const char* name() const override { return "Wires"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;

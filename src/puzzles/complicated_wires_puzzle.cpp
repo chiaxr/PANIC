@@ -83,8 +83,7 @@ bool resolve(Instruction instr, const BombAttributes& attrs) {
 
 } // namespace
 
-void ComplicatedWiresPuzzle::init(const BombAttributes& attrs) {
-    std::mt19937 rng(std::random_device{}());
+void ComplicatedWiresPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     std::uniform_int_distribution<int> coin(0, 1);
 
     // Deal wires until at least one of them actually has to be cut, so the

@@ -15,7 +15,7 @@ public:
     static constexpr int stage_count = 5;
 
     const char* name() const override { return "Memory"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
@@ -27,6 +27,7 @@ private:
     // 0-based position of the button carrying `label`; -1 if absent.
     int position_of_label(int label) const;
 
+    std::mt19937 rng_;   // seeded from the bomb's engine in init()
     std::array<int, button_count> labels_{};   // digit printed on each button
     int display_ = 1;                          // digit in the big display
     int stage_ = 0;                            // 0-based

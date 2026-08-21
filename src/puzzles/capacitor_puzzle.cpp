@@ -23,7 +23,7 @@ Rectangle lever_rect() { return Rectangle{lever_x, lever_y, lever_w, lever_h}; }
 
 } // namespace
 
-void CapacitorPuzzle::init(const BombAttributes& attrs) {
+void CapacitorPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;
     charge_ = 0.0f;
     holding_ = false;

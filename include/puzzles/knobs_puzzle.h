@@ -13,7 +13,7 @@ public:
     static constexpr int led_count = 12;
 
     const char* name() const override { return "Knobs"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;

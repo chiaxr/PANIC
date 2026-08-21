@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <vector>
 
 #include "raylib.h"
 #include "raymath.h"
@@ -48,7 +50,7 @@ constexpr Color col_good{90, 220, 120, 255};
 constexpr int menu_btn_w = 400;
 constexpr int menu_btn_h = 52;
 constexpr int menu_btn_gap = 66;
-constexpr int menu_count = 3;
+constexpr int menu_count = 2;
 
 // End-of-round buttons: a centred pair.
 constexpr int end_btn_w = 280;
@@ -56,7 +58,17 @@ constexpr int end_btn_h = 52;
 constexpr int end_btn_gap = 24;
 constexpr int end_count = 2;
 
-// Modal dialog chrome (Settings, Instructions): a BACK button and a footer hint
+// Serial entry and difficulty slider, sat above the menu buttons.
+constexpr int seed_row_w = 400;          // same width as the menu buttons
+constexpr int serial_box_h = 62;
+constexpr int slider_h = 26;
+constexpr int slider_knob_w = 22;
+constexpr int seed_block_gap = 18;
+constexpr int seed_label_h = 26;   // room above each control for its caption
+constexpr int min_difficulty = 1;
+constexpr int max_difficulty = 6;
+
+// Modal dialog chrome (Instructions): a BACK button and a footer hint
 // occupy a fixed-height block at the bottom of every panel, so both dialogs
 // look and behave identically.
 constexpr int dialog_back_btn_w = 220;
@@ -76,7 +88,7 @@ constexpr int instr_line_size = 17;
 constexpr int instr_header_step = 28;
 constexpr int instr_line_step = 21;
 constexpr int instr_section_gap = 14;
-constexpr int instr_link_dy = 456;  // link row top, relative to panel top
+constexpr int instr_link_dy = 480;  // link row top, relative to panel top
 constexpr int instr_link_h = 46;
 
 struct DialogLayout {
@@ -85,6 +97,23 @@ struct DialogLayout {
     int bw = 0;
     int bh = 0;
 };
+
+// Build the bomb's engine from the run's seed. Mixing the difficulty in means
+// the same serial at a different module count is a genuinely different bomb,
+// which is what players expect from a difficulty setting.
+std::mt19937 seeded_engine(const std::string& serial, int difficulty) {
+    std::vector<std::uint32_t> data;
+    data.reserve(serial.size() + 1);
+    for (char c : serial) data.push_back(static_cast<std::uint32_t>(c));
+    data.push_back(static_cast<std::uint32_t>(difficulty));
+    std::seed_seq seq(data.begin(), data.end());
+    return std::mt19937(seq);
+}
+
+// Serials are upper-case letters and digits only.
+bool is_serial_char(int c) {
+    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z');
+}
 
 // Unified pointer over mouse and (single-)touch, so the same path serves
 // desktop and web/mobile.
@@ -97,12 +126,62 @@ Vector2 pointer_pos() {
     return GetMousePosition();
 }
 
+// The title screen stacks title, subtitle, the run's seed controls, then the
+// buttons. Everything below the subtitle hangs off this one anchor so the
+// blocks cannot drift into each other.
+float menu_seed_top(int sh) {
+    // Never let the seed block ride up into the subtitle on a short window.
+    const float below_subtitle = sh * 0.12f + 104.0f + 12.0f + 28.0f + 24.0f;
+    const float proportional = sh * 0.34f;
+    return proportional > below_subtitle ? proportional : below_subtitle;
+}
+
+// Height of the seed block: two labelled controls plus the gap under them.
+constexpr int seed_block_h = 196;
+
 Rectangle menu_button_rect(int idx, int sw, int sh) {
     const int x = (sw - menu_btn_w) / 2;
-    const int y = static_cast<int>(sh * 0.43f) + idx * menu_btn_gap;
+    const int y = static_cast<int>(menu_seed_top(sh)) + seed_block_h +
+                  idx * menu_btn_gap;
     return Rectangle{static_cast<float>(x), static_cast<float>(y),
                      static_cast<float>(menu_btn_w),
                      static_cast<float>(menu_btn_h)};
+}
+
+// Serial box, and the slider below it. Both are captioned, so each leaves
+// room above itself for its label.
+Rectangle serial_box_rect(int sw, int sh) {
+    const int x = (sw - seed_row_w) / 2;
+    const int y = static_cast<int>(menu_seed_top(sh)) + seed_label_h;
+    return Rectangle{static_cast<float>(x), static_cast<float>(y),
+                     static_cast<float>(seed_row_w),
+                     static_cast<float>(serial_box_h)};
+}
+
+Rectangle slider_rect(int sw, int sh) {
+    const Rectangle box = serial_box_rect(sw, sh);
+    return Rectangle{box.x,
+                     box.y + box.height + seed_block_gap +
+                         static_cast<float>(seed_label_h),
+                     static_cast<float>(seed_row_w),
+                     static_cast<float>(slider_h)};
+}
+
+// Where the knob sits for a given difficulty.
+float slider_knob_x(Rectangle track, int difficulty) {
+    const float t = static_cast<float>(difficulty - min_difficulty) /
+                    static_cast<float>(max_difficulty - min_difficulty);
+    return track.x + t * (track.width - slider_knob_w);
+}
+
+// Difficulty under a pointer at x, clamped to the slider's range.
+int difficulty_at_x(Rectangle track, float x) {
+    const float usable = track.width - slider_knob_w;
+    float t = (x - track.x - slider_knob_w * 0.5f) / usable;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+    return min_difficulty +
+           static_cast<int>(t * (max_difficulty - min_difficulty) + 0.5f);
 }
 
 Rectangle end_button_rect(int idx, int sw, int top_y) {
@@ -137,12 +216,8 @@ DialogLayout centered_layout(int bw, int bh, int sw, int sh) {
     return DialogLayout{(sw - bw) / 2, (sh - bh) / 2, bw, bh};
 }
 
-DialogLayout settings_layout(int sw, int sh) {
-    return centered_layout(520, 260, sw, sh);
-}
-
 DialogLayout instructions_layout(int sw, int sh) {
-    return centered_layout(760, 630, sw, sh);
+    return centered_layout(760, 654, sw, sh);
 }
 
 Rectangle dialog_back_button_rect(const DialogLayout& l) {
@@ -196,8 +271,12 @@ void Game::setup() {
     camera_.fovy = 45.0f;
     camera_.projection = CAMERA_PERSPECTIVE;
 
-    rng_.seed(std::random_device{}());
-    bomb_.setup(rng_);
+    // The menu's backdrop bomb is built from the serial shown in the box, so
+    // what the players see is already the bomb they would get by pressing START.
+    serial_rng_.seed(std::random_device{}());
+    randomize_serial();
+    rng_ = seeded_engine(serial_, difficulty_);
+    bomb_.setup(rng_, serial_, difficulty_);
 }
 
 void Game::unload() { bomb_.unload(); }
@@ -407,9 +486,26 @@ bool Game::consume_tap(Vector2& out_pos) {
     return tapped;
 }
 
+void Game::randomize_serial() {
+    serial_ = BombAttributes::random_serial(serial_rng_);
+}
+
+// A serial has to be the full length and carry at least one digit, because
+// several modules key off "the last digit of the serial".
+bool Game::serial_is_valid() const {
+    if (static_cast<int>(serial_.size()) != BombAttributes::serial_length) {
+        return false;
+    }
+    for (char c : serial_) {
+        if (c >= '0' && c <= '9') return true;
+    }
+    return false;
+}
+
 void Game::start_round() {
     bomb_.unload();
-    bomb_.setup(rng_);
+    rng_ = seeded_engine(serial_, difficulty_);
+    bomb_.setup(rng_, serial_, difficulty_);
 
     state_ = State::PLAYING;
     time_left_ = round_seconds;
@@ -433,10 +529,49 @@ void Game::start_round() {
 
 void Game::activate_menu_button(int idx) {
     switch (idx) {
-        case 0: start_round(); break;
-        case 1: state_ = State::SETTINGS; break;
-        case 2: state_ = State::INSTRUCTIONS; break;
+        case 0:
+            // A short serial, or one with no digit, would leave several
+            // modules' rules undefined, so refuse rather than build it.
+            if (serial_is_valid()) start_round();
+            break;
+        case 1: state_ = State::INSTRUCTIONS; break;
         default: break;
+    }
+}
+
+// Typing into the serial box. Only accepts serial characters, and lower case
+// is folded up so the box always shows what the casing will print.
+void Game::update_serial_entry() {
+    if (!serial_focused_) return;
+
+    for (int c = GetCharPressed(); c != 0; c = GetCharPressed()) {
+        if (c >= 'a' && c <= 'z') c -= 'a' - 'A';
+        if (!is_serial_char(c)) continue;
+        if (static_cast<int>(serial_.size()) >= BombAttributes::serial_length) {
+            continue;
+        }
+        serial_ += static_cast<char>(c);
+    }
+
+    if (IsKeyPressed(KEY_BACKSPACE) && !serial_.empty()) serial_.pop_back();
+}
+
+void Game::update_difficulty_slider() {
+    const Rectangle track = slider_rect(GetScreenWidth(), GetScreenHeight());
+    const Vector2 pos = pointer_pos();
+    const bool down = pointer_down();
+
+    // Grab anywhere on the track, then keep following the pointer.
+    if (down && !dragging_slider_ && CheckCollisionPointRec(pos, track)) {
+        dragging_slider_ = true;
+    }
+    if (!down) dragging_slider_ = false;
+    if (dragging_slider_) difficulty_ = difficulty_at_x(track, pos.x);
+
+    // Keyboard nudges, so the slider is reachable without a pointer.
+    if (!serial_focused_) {
+        if (IsKeyPressed(KEY_LEFT) && difficulty_ > min_difficulty) --difficulty_;
+        if (IsKeyPressed(KEY_RIGHT) && difficulty_ < max_difficulty) ++difficulty_;
     }
 }
 
@@ -444,11 +579,19 @@ void Game::update_menu() {
     const int sw = GetScreenWidth();
     const int sh = GetScreenHeight();
 
+    update_serial_entry();
+    update_difficulty_slider();
+
     if (IsKeyPressed(KEY_UP)) {
         menu_selected_idx_ = (menu_selected_idx_ - 1 + menu_count) % menu_count;
     }
     if (IsKeyPressed(KEY_DOWN)) {
         menu_selected_idx_ = (menu_selected_idx_ + 1) % menu_count;
+    }
+    // While typing, Enter just closes the box rather than starting a round.
+    if (serial_focused_ && IsKeyPressed(KEY_ENTER)) {
+        serial_focused_ = false;
+        return;
     }
 
     // Mouse hover / touch contact moves the selection.
@@ -462,32 +605,26 @@ void Game::update_menu() {
         }
     }
 
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+    // Not while typing: space is not a serial character, but it would
+    // otherwise fall through and press START.
+    if (!serial_focused_ &&
+            (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) {
         activate_menu_button(menu_selected_idx_);
         return;
     }
 
     Vector2 tap{};
-    if (consume_tap(tap)) {
-        for (int i = 0; i < menu_count; ++i) {
-            if (CheckCollisionPointRec(tap, menu_button_rect(i, sw, sh))) {
-                activate_menu_button(i);
-                return;
-            }
+    if (!consume_tap(tap)) return;
+
+    // Clicking the box starts editing; clicking anywhere else stops.
+    serial_focused_ = CheckCollisionPointRec(tap, serial_box_rect(sw, sh));
+    if (serial_focused_) return;
+
+    for (int i = 0; i < menu_count; ++i) {
+        if (CheckCollisionPointRec(tap, menu_button_rect(i, sw, sh))) {
+            activate_menu_button(i);
+            return;
         }
-    }
-}
-
-void Game::update_settings() {
-    const DialogLayout l = settings_layout(GetScreenWidth(), GetScreenHeight());
-    const Rectangle back = dialog_back_button_rect(l);
-
-    Vector2 tap{};
-    const bool tapped_back = consume_tap(tap) &&
-                             CheckCollisionPointRec(tap, back);
-    if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressed(KEY_ENTER) || tapped_back) {
-        menu_selected_idx_ = 1;
-        state_ = State::MENU;
     }
 }
 
@@ -511,7 +648,7 @@ void Game::update_instructions() {
     const bool tapped_back = tapped && CheckCollisionPointRec(tap, back);
     if (IsKeyPressed(KEY_BACKSPACE) || IsKeyPressed(KEY_ENTER) || tapped_back) {
         SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-        menu_selected_idx_ = 2;
+        menu_selected_idx_ = 1;
         state_ = State::MENU;
     }
 }
@@ -569,11 +706,6 @@ void Game::update(float dt) {
         case State::MENU:
             yaw_ += menu_spin_speed * dt;
             update_menu();
-            break;
-
-        case State::SETTINGS:
-            yaw_ += menu_spin_speed * dt;
-            update_settings();
             break;
 
         case State::INSTRUCTIONS:
@@ -636,27 +768,92 @@ void Game::draw_menu() const {
     draw_centered_text("Puzzles Always Need Immediate Communication",
                        ty + title_size + 12, 28, col_text_dim);
 
-    const char* labels[menu_count] = {"START", "SETTINGS", "INSTRUCTIONS"};
-    for (int i = 0; i < menu_count; ++i) {
-        draw_button(labels[i], menu_button_rect(i, sw, sh),
-                    i == menu_selected_idx_);
+    // ---- the run's seed: serial number and module count ----
+    const Rectangle box = serial_box_rect(sw, sh);
+    const bool valid = serial_is_valid();
+
+    draw_centered_text("BOMB SERIAL", static_cast<int>(box.y) - 26, 18,
+                       col_text_dim);
+    DrawRectangleRec(box, Color{18, 30, 24, 255});
+    DrawRectangleLinesEx(box, 3,
+                         serial_focused_ ? col_accent
+                                         : (valid ? Color{70, 72, 80, 255}
+                                                  : Color{150, 90, 60, 255}));
+
+    const int serial_size = 40;
+    const int serial_w = MeasureText(serial_.c_str(), serial_size);
+    const int serial_x = static_cast<int>(box.x + (box.width - serial_w) * 0.5f);
+    const int serial_y =
+        static_cast<int>(box.y + (box.height - serial_size) * 0.5f);
+    DrawText(serial_.c_str(), serial_x, serial_y, serial_size,
+             Color{120, 240, 150, 255});
+
+    // Caret, blinking, while the box has focus.
+    if (serial_focused_ &&
+        static_cast<int>(GetTime() * 2.0f) % 2 == 0 &&
+        static_cast<int>(serial_.size()) < BombAttributes::serial_length) {
+        DrawRectangle(serial_x + serial_w + 4, serial_y, 3, serial_size,
+                      Color{120, 240, 150, 255});
     }
 
-    draw_centered_text("Arrow keys to navigate   -   Enter or click to select",
-                       sh - 32, 16, col_hint);
-}
-
-void Game::draw_settings() const {
-    const DialogLayout l = settings_layout(GetScreenWidth(), GetScreenHeight());
-    draw_dialog_panel(l, "SETTINGS");
-
-    draw_centered_text("Nothing to configure yet.", l.by + 92, 20,
+    // ---- difficulty ----
+    const Rectangle track = slider_rect(sw, sh);
+    const char* diff_label =
+        TextFormat("DIFFICULTY   %d MODULE%s", difficulty_,
+                   difficulty_ == 1 ? "" : "S");
+    draw_centered_text(diff_label, static_cast<int>(track.y) - 26, 18,
                        col_text_dim);
-    draw_centered_text("Options will land here as the game grows.",
-                       l.by + 120, 17, col_hint);
 
-    draw_dialog_footer(l, "Back, Enter or Backspace to return",
-                       rect_hovered(dialog_back_button_rect(l)));
+    DrawRectangleRec(track, Color{24, 25, 30, 255});
+    const float knob_x = slider_knob_x(track, difficulty_);
+    DrawRectangleRec(Rectangle{track.x, track.y, knob_x - track.x + slider_knob_w,
+                               track.height},
+                     Color{78, 34, 36, 255});
+    DrawRectangleLinesEx(track, 3, Color{70, 72, 80, 255});
+    DrawRectangleRec(
+        Rectangle{knob_x, track.y - 5.0f, static_cast<float>(slider_knob_w),
+                  track.height + 10.0f},
+        col_accent);
+
+    // Notches, so the discrete steps are visible.
+    for (int d = min_difficulty; d <= max_difficulty; ++d) {
+        const float x = slider_knob_x(track, d) + slider_knob_w * 0.5f;
+        DrawRectangle(static_cast<int>(x) - 1,
+                      static_cast<int>(track.y + track.height) + 8, 2, 6,
+                      Color{70, 72, 80, 255});
+    }
+
+    // ---- buttons ----
+    const char* labels[menu_count] = {"START", "INSTRUCTIONS"};
+    for (int i = 0; i < menu_count; ++i) {
+        const Rectangle r = menu_button_rect(i, sw, sh);
+        if (i == 0 && !valid) {
+            // START stays visible but reads as unavailable.
+            DrawRectangleRec(r, Color{22, 22, 26, 200});
+            DrawRectangleLinesEx(r, 2, Color{56, 48, 48, 200});
+            const int fs = 26;
+            DrawText(labels[i],
+                     static_cast<int>(r.x + (r.width -
+                                             MeasureText(labels[i], fs)) * 0.5f),
+                     static_cast<int>(r.y + (r.height - fs) * 0.5f), fs,
+                     Color{110, 100, 100, 255});
+            continue;
+        }
+        draw_button(labels[i], r, i == menu_selected_idx_);
+    }
+
+    if (!valid) {
+        draw_centered_text(
+            "The serial needs 6 characters and at least one digit",
+            static_cast<int>(menu_button_rect(menu_count - 1, sw, sh).y) +
+                menu_btn_h + 16,
+            16, Color{200, 130, 90, 255});
+    }
+
+    draw_centered_text(
+        "Click the serial to edit   -   the same serial and difficulty "
+        "always builds the same bomb",
+        sh - 32, 16, col_hint);
 }
 
 void Game::draw_instructions() const {
@@ -679,6 +876,8 @@ void Game::draw_instructions() const {
     header("Objective");
     line("Disarm every module before the countdown reaches zero.");
     line("Three strikes and the bomb detonates.");
+    line("The serial and difficulty on the title screen build the bomb:");
+    line("note them down to replay the same one.");
     y += instr_section_gap;
 
     header("Two players, one manual");
@@ -795,7 +994,6 @@ void Game::draw() {
 
     switch (state_) {
         case State::MENU:         draw_menu();         break;
-        case State::SETTINGS:     draw_settings();     break;
         case State::INSTRUCTIONS: draw_instructions(); break;
         default:                  draw_hud();          break;
     }

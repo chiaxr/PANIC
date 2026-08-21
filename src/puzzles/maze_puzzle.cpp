@@ -82,9 +82,8 @@ Rectangle arrow_rect(int direction) {
 
 } // namespace
 
-void MazePuzzle::init(const BombAttributes& attrs) {
+void MazePuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // which maze is in play is shown by the markers, not the bomb
-    std::mt19937 rng(std::random_device{}());
     maze_index_ = std::uniform_int_distribution<int>(0, maze_count - 1)(rng);
 
     std::uniform_int_distribution<int> coord(0, grid - 1);

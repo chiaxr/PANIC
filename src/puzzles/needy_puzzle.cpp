@@ -8,12 +8,9 @@ constexpr float dormant_max_seconds = 32.0f;
 
 } // namespace
 
-std::mt19937& NeedyPuzzle::needy_rng() {
-    static std::mt19937 engine(std::random_device{}());
-    return engine;
-}
-
-void NeedyPuzzle::reset_needy() {
+void NeedyPuzzle::reset_needy(std::mt19937& rng) {
+    // Own engine, seeded from the bomb's, so wake-up times replay identically.
+    rng_.seed(rng());
     active_ = false;
     go_dormant();
 }
@@ -22,7 +19,7 @@ void NeedyPuzzle::go_dormant() {
     active_ = false;
     timer_ = std::uniform_real_distribution<float>(dormant_min_seconds,
                                                    dormant_max_seconds)(
-        needy_rng());
+        rng_);
 }
 
 float NeedyPuzzle::needy_fraction() const {

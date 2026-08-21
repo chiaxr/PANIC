@@ -19,7 +19,8 @@ public:
     bool is_needy() const override { return true; }
 
 protected:
-    void reset_needy();
+    // Seeds the module's engine from the bomb's, then goes dormant.
+    void reset_needy(std::mt19937& rng);
     void tick_needy(float dt);
 
     bool active() const { return active_; }
@@ -32,11 +33,12 @@ protected:
     virtual void on_activate() {}
     virtual void on_expire() { raise_strike(); }
 
-    std::mt19937& needy_rng();
+    std::mt19937& needy_rng() { return rng_; }
 
 private:
     void go_dormant();
 
+    std::mt19937 rng_;
     bool active_ = false;
     float timer_ = 0.0f;
 };

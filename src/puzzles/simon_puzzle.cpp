@@ -65,8 +65,7 @@ SimonPuzzle::SimonColor SimonPuzzle::mapped_color(SimonColor flashed,
     return color_map[row][static_cast<int>(flashed)];
 }
 
-void SimonPuzzle::init(const BombAttributes& attrs) {
-    std::mt19937 rng(std::random_device{}());
+void SimonPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     serial_has_vowel_ = attrs.serial_has_vowel();
 
     sequence_.clear();

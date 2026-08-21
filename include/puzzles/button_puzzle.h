@@ -17,7 +17,7 @@ public:
     enum class StripColor { STRIP_BLUE, STRIP_WHITE, STRIP_YELLOW, STRIP_OTHER };
 
     const char* name() const override { return "The Button"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;

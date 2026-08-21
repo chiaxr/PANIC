@@ -18,7 +18,7 @@ public:
     static constexpr int rows_per_panel = 3;
 
     const char* name() const override { return "Wire Sequences"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;

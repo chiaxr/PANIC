@@ -57,9 +57,8 @@ Color sequence_color(WireSequencesPuzzle::SeqColor c) {
 
 } // namespace
 
-void WireSequencesPuzzle::init(const BombAttributes& attrs) {
+void WireSequencesPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // the module's own occurrence tables decide everything
-    std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> pick_color(0, 2);
     std::uniform_int_distribution<int> pick_conn(0, 2);
 

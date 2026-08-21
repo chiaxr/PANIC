@@ -66,10 +66,6 @@ Rectangle button_rect(int idx) {
     return Rectangle{x, y, btn_w, btn_h};
 }
 
-std::mt19937& rng() {
-    static std::mt19937 engine(std::random_device{}());
-    return engine;
-}
 
 const char* const* priority_for(const char* label) {
     for (const PriorityEntry& e : priority_table) {
@@ -80,8 +76,9 @@ const char* const* priority_for(const char* label) {
 
 } // namespace
 
-void WhosOnFirstPuzzle::init(const BombAttributes& attrs) {
+void WhosOnFirstPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // the module's own two tables decide everything
+    rng_.seed(rng());   // later stages are dealt during play, from this engine
     stage_ = 0;
     deal_stage();
 }
@@ -89,13 +86,13 @@ void WhosOnFirstPuzzle::init(const BombAttributes& attrs) {
 void WhosOnFirstPuzzle::deal_stage() {
     std::array<int, label_count> pick{};
     for (int i = 0; i < label_count; ++i) pick[static_cast<size_t>(i)] = i;
-    std::shuffle(pick.begin(), pick.end(), rng());
+    std::shuffle(pick.begin(), pick.end(), rng_);
     for (int i = 0; i < button_count; ++i) {
         labels_[static_cast<size_t>(i)] = labels[pick[static_cast<size_t>(i)]];
     }
 
     display_ = display_table[std::uniform_int_distribution<int>(
-                                 0, display_count - 1)(rng())]
+                                 0, display_count - 1)(rng_)]
                    .word;
 }
 

@@ -7,6 +7,13 @@ PANIC is a small 3D bomb-defusal game inspired by *Keep Talking and Nobody Explo
 [Try it here now!](https://chiaxr.github.io/PANIC/)
 
 ## Gameplay
+
+The title screen carries the run's seed: a **bomb serial number** and a **difficulty slider**.
+Together they seed everything about the bomb — its attributes, which modules spawn, where they sit,
+and each module's own variables — so noting the pair down replays exactly the same bomb. The box
+starts with a randomly generated serial; click it to edit. Difficulty sets how many of the six bays
+are filled, from 1 to 6.
+
 Rotate the bomb to inspect its faces and read the widgets aloud to your Expert. Each **module**
 must be disarmed before the countdown reaches zero. Three **strikes** and the bomb detonates.
 
@@ -19,7 +26,7 @@ only the Defuser can see:
 | Batteries | How many battery cells are shown |
 | Indicators | Which labelled lights (`CAR`, `FRK`, …) are lit vs unlit |
 
-Every bomb fills its six bays with a random selection of modules:
+A bomb fills as many bays as the difficulty asks for, drawn at random without repeats:
 
 | Module | What the Defuser does |
 | --- | --- |
@@ -35,7 +42,7 @@ Every bomb fills its six bays with a random selection of modules:
 | Wire Sequences | Cuts wires across four panels, counting each colour as it goes |
 | Mazes | Steers a marker to the goal through walls only the Expert can see |
 
-Up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not
+At difficulty 3 and above, up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not
 counted in the module total — they wake up periodically for the whole round and demand attention:
 
 | Needy module | What the Defuser does |
@@ -58,7 +65,9 @@ manual, not any other.
 | --- | --- |
 | Arrow keys | Move the title-screen / end-screen selection |
 | Enter / Space / Mouse click / Tap | Activate the selected button |
-| Backspace | Leave Settings or Instructions; step back out of a focused module |
+| Click the serial box | Edit the bomb serial; Enter or a click elsewhere finishes |
+| Left / Right arrows | Move the difficulty slider (it can also be dragged) |
+| Backspace | Leave Instructions; step back out of a focused module |
 | Drag (mouse / one finger) | Rotate the bomb (free look only) |
 | Mouse click / Tap on a module | Zoom in on it |
 | Mouse click / Tap on a focused module | Interact with it (e.g. cut a wire) |

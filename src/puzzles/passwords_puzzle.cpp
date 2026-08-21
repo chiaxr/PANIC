@@ -45,9 +45,8 @@ Rectangle submit_rect() {
 
 } // namespace
 
-void PasswordsPuzzle::init(const BombAttributes& attrs) {
+void PasswordsPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;   // Passwords depends only on its own letter wheels
-    std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> pick_word(0, word_count - 1);
     std::uniform_int_distribution<int> pick_letter(0, 25);
 

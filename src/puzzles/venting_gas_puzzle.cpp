@@ -20,9 +20,9 @@ Rectangle no_rect() { return Rectangle{274.0f, btn_y, btn_w, btn_h}; }
 
 } // namespace
 
-void VentingGasPuzzle::init(const BombAttributes& attrs) {
+void VentingGasPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
     (void)attrs;
-    reset_needy();
+    reset_needy(rng);
 }
 
 void VentingGasPuzzle::on_activate() {

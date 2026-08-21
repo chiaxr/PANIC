@@ -11,11 +11,13 @@
 //
 // Adding a new module:
 //   1. Subclass Puzzle (see puzzles/wires_puzzle.h for a worked example).
-//   2. Read what you need from BombAttributes in init() to pick your variables.
+//   2. Read what you need from BombAttributes in init() to pick your variables,
+//      taking all randomness from the seeded rng that init() is handed.
 //   3. Register a factory in register_builtin_puzzles() (bomb.cpp).
 
 #include <functional>
 #include <memory>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -61,8 +63,11 @@ public:
     // Human-readable module name (also the manual heading).
     virtual const char* name() const = 0;
 
-    // Derive puzzle variables from the bomb's attributes.
-    virtual void init(const BombAttributes& attrs) = 0;
+    // Derive puzzle variables from the bomb's attributes. `rng` is the bomb's
+    // seeded generator: every module must take its randomness from it (or from
+    // a member engine seeded off it) so that one serial always builds the same
+    // bomb. Never use std::random_device in a module.
+    virtual void init(const BombAttributes& attrs, std::mt19937& rng) = 0;
 
     // Advance interaction. Called every frame while the game is running, even
     // for modules that are not focused (needy timers depend on this); `in` only

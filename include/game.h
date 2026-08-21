@@ -10,10 +10,15 @@
 // accepts taps on its components.
 //
 // It also owns the front-end states drawn over that scene: the title menu and
-// the Settings / Instructions dialogs. The bomb keeps rendering (and slowly
-// spinning) behind them as a backdrop.
+// the Instructions dialog. The bomb keeps rendering (and slowly spinning)
+// behind them as a backdrop.
+//
+// The title screen carries the run's seed: a serial number the players can type
+// and a difficulty slider setting the module count. Together those seed every
+// random choice the bomb makes, so the same pair replays the same bomb exactly.
 
 #include <random>
+#include <string>
 
 #include "raylib.h"
 
@@ -28,7 +33,7 @@ public:
     void set_paused(bool paused) { paused_ = paused; }
 
 private:
-    enum class State { MENU, SETTINGS, INSTRUCTIONS, PLAYING, DEFUSED, EXPLODED };
+    enum class State { MENU, INSTRUCTIONS, PLAYING, DEFUSED, EXPLODED };
 
     void handle_pointer(float dt);
     void draw_hud() const;
@@ -42,12 +47,15 @@ private:
 
     // Front-end states.
     void update_menu();
-    void update_settings();
+    // Title-screen serial entry and difficulty slider.
+    void update_serial_entry();
+    void update_difficulty_slider();
+    void randomize_serial();
+    bool serial_is_valid() const;
     void update_instructions();
     void update_end_screen();
     void activate_menu_button(int idx);
     void draw_menu() const;
-    void draw_settings() const;
     void draw_instructions() const;
 
     // Fresh bomb + reset round state, then enter State::PLAYING.
@@ -102,6 +110,17 @@ private:
     // Menu / end-screen selection.
     int menu_selected_idx_ = 0;
     int end_selected_idx_ = 0;
+
+    // The run's seed. The serial the players type, together with the module
+    // count, seeds everything about the bomb, so the same pair always replays
+    // the same run.
+    std::string serial_;
+    bool serial_focused_ = false;
+    int difficulty_ = 3;          // number of modules to spawn
+    bool dragging_slider_ = false;
+
+    // Engine used to roll a fresh serial; separate from the bomb's seeded one.
+    std::mt19937 serial_rng_;
 
     bool paused_ = false;
 };

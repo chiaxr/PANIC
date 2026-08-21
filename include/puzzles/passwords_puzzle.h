@@ -15,7 +15,7 @@ public:
     static constexpr int letters_per_column = 6;
 
     const char* name() const override { return "Passwords"; }
-    void init(const BombAttributes& attrs) override;
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
