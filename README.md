@@ -31,6 +31,9 @@ Every bomb fills its six bays with a random selection of modules:
 | Simon Says | Repeats a flashing colour sequence, remapped by serial vowel and strike count |
 | Who's on First | Reads one button's label, then presses the first label on that label's priority list |
 | Morse Code | Decodes a blinking word and transmits its frequency |
+| Complicated Wires | Cuts each wire or not, from its colours, star and LED |
+| Wire Sequences | Cuts wires across four panels, counting each colour as it goes |
+| Mazes | Steers a marker to the goal through walls only the Expert can see |
 
 The Expert looks the rules up in the manual and talks the Defuser through them. A wrong move earns
 a strike.

@@ -10,12 +10,15 @@
 #include "rlgl.h"
 
 #include "puzzles/button_puzzle.h"
+#include "puzzles/complicated_wires_puzzle.h"
 #include "puzzles/keypads_puzzle.h"
+#include "puzzles/maze_puzzle.h"
 #include "puzzles/memory_puzzle.h"
 #include "puzzles/morse_puzzle.h"
 #include "puzzles/passwords_puzzle.h"
 #include "puzzles/simon_puzzle.h"
 #include "puzzles/whos_on_first_puzzle.h"
+#include "puzzles/wire_sequences_puzzle.h"
 #include "puzzles/wires_puzzle.h"
 
 // ---------------------------------------------------------------------------
@@ -43,6 +46,13 @@ void register_builtin_puzzles() {
             [] { return std::unique_ptr<Puzzle>(new WhosOnFirstPuzzle()); });
     reg.add("Morse Code",
             [] { return std::unique_ptr<Puzzle>(new MorsePuzzle()); });
+    reg.add("Complicated Wires", [] {
+        return std::unique_ptr<Puzzle>(new ComplicatedWiresPuzzle());
+    });
+    reg.add("Wire Sequences", [] {
+        return std::unique_ptr<Puzzle>(new WireSequencesPuzzle());
+    });
+    reg.add("Mazes", [] { return std::unique_ptr<Puzzle>(new MazePuzzle()); });
 }
 
 namespace {
@@ -59,7 +69,7 @@ constexpr size_t slot_count = 6;   // three front bays, three back
 // Every module template that can appear on a bomb, in a fixed order: bomb
 // generation shuffles this, and PuzzleRegistry::names() cannot be used for it
 // because an unordered_map's order is not reproducible from the bomb's seed.
-constexpr std::array<const char*, 8> module_templates = {
+constexpr std::array<const char*, 11> module_templates = {
     "Wires",
     "The Button",
     "Keypads",
@@ -68,6 +78,9 @@ constexpr std::array<const char*, 8> module_templates = {
     "Simon Says",
     "Who's on First",
     "Morse Code",
+    "Complicated Wires",
+    "Wire Sequences",
+    "Mazes",
 };
 
 // Needy modules are never disarmed, so a bomb built only from them could never

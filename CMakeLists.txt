@@ -56,6 +56,9 @@ add_library(panic_game STATIC
     src/puzzles/simon_puzzle.cpp
     src/puzzles/whos_on_first_puzzle.cpp
     src/puzzles/morse_puzzle.cpp
+    src/puzzles/complicated_wires_puzzle.cpp
+    src/puzzles/wire_sequences_puzzle.cpp
+    src/puzzles/maze_puzzle.cpp
 )
 
 target_include_directories(panic_game PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
