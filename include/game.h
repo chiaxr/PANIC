@@ -5,6 +5,10 @@
 // mouse/touch pointer events into either a bomb rotation (drag) or a module tap
 // (short press that lands on a module face).
 //
+// Modules are interacted with through a focus step: a tap on a module swings
+// the bomb flat and zooms the camera onto that bay, and only the focused module
+// accepts taps on its components.
+//
 // It also owns the front-end states drawn over that scene: the title menu and
 // the Settings / Instructions dialogs. The bomb keeps rendering (and slowly
 // spinning) behind them as a backdrop.
@@ -28,6 +32,13 @@ private:
 
     void handle_pointer(float dt);
     void draw_hud() const;
+
+    // Module focus: align the bomb so a bay faces the camera and zoom in on it.
+    void begin_focus(int slot_index);
+    void end_focus();
+    void update_focus(float dt);
+    // True once the focus move has settled, i.e. components accept input.
+    bool focus_settled() const;
 
     // Front-end states.
     void update_menu();
@@ -68,6 +79,18 @@ private:
     Vector2 last_pos_{};
     int press_slot_ = -1;
     Vector2 press_pixel_{};
+
+    // Module focus. focused_slot_ stays set while the move animates back out,
+    // so free-look rotation stays locked until the camera is home again.
+    int focused_slot_ = -1;
+    bool focusing_ = false;
+    float focus_t_ = 0.0f;      // 0 = free look, 1 = fully focused
+    float free_yaw_ = 0.5f;     // rotation to return to when unfocusing
+    float free_pitch_ = -0.15f;
+    float focus_yaw_ = 0.0f;
+    float focus_pitch_ = 0.0f;
+    Vector3 focus_cam_pos_{};
+    Vector3 focus_cam_target_{};
 
     // Round state.
     State state_ = State::MENU;

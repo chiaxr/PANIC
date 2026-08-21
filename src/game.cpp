@@ -1,5 +1,6 @@
 #include "game.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "raylib.h"
@@ -12,6 +13,21 @@ constexpr float rot_speed = 0.008f;     // radians per pixel dragged
 constexpr float drag_threshold = 8.0f;  // px of motion before a press is a drag
 constexpr float pitch_limit = 1.45f;
 constexpr float menu_spin_speed = 0.25f;  // radians per second on the menu
+
+// Free-look camera, and the module-focus move that swings away from it.
+constexpr Vector3 camera_free_pos{0.0f, 0.0f, 8.0f};
+constexpr Vector3 camera_free_target{0.0f, 0.0f, 0.0f};
+constexpr float focus_time = 0.32f;         // seconds for the focus move
+constexpr float focus_zoom_margin = 1.55f;  // >1 leaves air around the module
+
+// Shortest signed way round to an angle, so focusing never takes the long way.
+float wrap_pi(float radians) {
+    while (radians > PI) radians -= 2.0f * PI;
+    while (radians < -PI) radians += 2.0f * PI;
+    return radians;
+}
+
+float smoothstep01(float t) { return t * t * (3.0f - 2.0f * t); }
 
 // The Expert's manual. raylib's OpenURL is implemented per platform (desktop
 // opens the system browser, web opens a new tab), so the call site stays
@@ -60,7 +76,7 @@ constexpr int instr_line_size = 17;
 constexpr int instr_header_step = 28;
 constexpr int instr_line_step = 21;
 constexpr int instr_section_gap = 14;
-constexpr int instr_link_dy = 430;  // link row top, relative to panel top
+constexpr int instr_link_dy = 456;  // link row top, relative to panel top
 constexpr int instr_link_h = 46;
 
 struct DialogLayout {
@@ -126,7 +142,7 @@ DialogLayout settings_layout(int sw, int sh) {
 }
 
 DialogLayout instructions_layout(int sw, int sh) {
-    return centered_layout(760, 600, sw, sh);
+    return centered_layout(760, 630, sw, sh);
 }
 
 Rectangle dialog_back_button_rect(const DialogLayout& l) {
@@ -174,8 +190,8 @@ bool rect_hovered(Rectangle rect) {
 }   // namespace
 
 void Game::setup() {
-    camera_.position = Vector3{0.0f, 0.0f, 8.0f};
-    camera_.target = Vector3{0.0f, 0.0f, 0.0f};
+    camera_.position = camera_free_pos;
+    camera_.target = camera_free_target;
     camera_.up = Vector3{0.0f, 1.0f, 0.0f};
     camera_.fovy = 45.0f;
     camera_.projection = CAMERA_PERSPECTIVE;
@@ -240,27 +256,106 @@ void Game::handle_pointer(float dt) {
         last_pos_ = pos;
         press_slot_ = pick_module(pos, press_pixel_);
     } else if (down && pointer_down_) {
-        // Held: distinguish drag (rotate) from tap.
+        // Held: distinguish drag (rotate) from tap. Free-look only — a focused
+        // module stays square to the camera.
         const Vector2 delta = Vector2Subtract(pos, last_pos_);
         if (Vector2Distance(pos, press_pos_) > drag_threshold) dragging_ = true;
-        if (dragging_) {
+        if (dragging_ && focused_slot_ < 0) {
             yaw_ += delta.x * rot_speed;
             // Vertical drag is inverted: dragging down tips the top of the bomb away.
             pitch_ = Clamp(pitch_ + delta.y * rot_speed, -pitch_limit, pitch_limit);
+            free_yaw_ = yaw_;
+            free_pitch_ = pitch_;
         }
         last_pos_ = pos;
     } else if (!down && pointer_down_) {
-        // Release: a short press on a module counts as a tap.
+        // Release. A tap first focuses a module; only once the camera has
+        // settled on it does a tap reach the module's own components.
         pointer_down_ = false;
-        if (!dragging_ && press_slot_ >= 0) {
-            ModuleInput in;
-            in.tapped = true;
-            in.tap_pos = press_pixel_;
-            bomb_.send_input(press_slot_, in);
+        if (!dragging_) {
+            if (focus_settled()) {
+                if (press_slot_ == focused_slot_) {
+                    ModuleInput in;
+                    in.tapped = true;
+                    in.tap_pos = press_pixel_;
+                    bomb_.send_input(press_slot_, in);
+                } else if (press_slot_ >= 0) {
+                    begin_focus(press_slot_);   // straight to a neighbouring bay
+                } else {
+                    end_focus();                // tapped off the module
+                }
+            } else if (focused_slot_ < 0 && press_slot_ >= 0) {
+                begin_focus(press_slot_);
+            }
+            // Mid-move taps are ignored.
         }
         press_slot_ = -1;
         dragging_ = false;
     }
+}
+
+bool Game::focus_settled() const {
+    return focused_slot_ >= 0 && focusing_ && focus_t_ >= 1.0f;
+}
+
+void Game::begin_focus(int slot_index) {
+    const auto& slots = bomb_.slots();
+    if (slot_index < 0 || static_cast<size_t>(slot_index) >= slots.size()) return;
+    const FaceQuad& q = slots[slot_index].quad;
+
+    // Only remember the free-look rotation on the way in, so hopping between
+    // bays still returns to where the player was looking.
+    if (focused_slot_ < 0) {
+        free_yaw_ = yaw_;
+        free_pitch_ = pitch_;
+    }
+
+    focused_slot_ = slot_index;
+    focusing_ = true;
+
+    // Turn the bay's outward normal towards the camera: front bays need no
+    // yaw, back bays a half turn, and the pitch always flattens out.
+    focus_pitch_ = 0.0f;
+    const float face_yaw = (q.normal.z >= 0.0f) ? 0.0f : PI;
+    focus_yaw_ = yaw_ + wrap_pi(face_yaw - yaw_);
+
+    // Where that leaves the module in world space, and how far back the camera
+    // has to sit for the face to fill most of the viewport height.
+    const Matrix m =
+        MatrixMultiply(MatrixRotateX(focus_pitch_), MatrixRotateY(focus_yaw_));
+    focus_cam_target_ = Vector3Transform(q.center, m);
+    const float dist = q.half_h / std::tan(camera_.fovy * 0.5f * DEG2RAD) *
+                       focus_zoom_margin;
+    focus_cam_pos_ =
+        Vector3Add(focus_cam_target_, Vector3{0.0f, 0.0f, dist});
+
+    // Re-aim the interpolation from wherever the camera currently is.
+    if (focus_t_ <= 0.0f) focus_t_ = 0.0f;
+}
+
+void Game::end_focus() {
+    // Keep focused_slot_ set until the move home finishes; update_focus clears
+    // it, which is also what keeps free-look locked until then.
+    focusing_ = false;
+}
+
+void Game::update_focus(float dt) {
+    const float target = focusing_ ? 1.0f : 0.0f;
+    if (focus_t_ < target) {
+        focus_t_ = std::min(target, focus_t_ + dt / focus_time);
+    } else if (focus_t_ > target) {
+        focus_t_ = std::max(target, focus_t_ - dt / focus_time);
+    }
+
+    if (focused_slot_ < 0) return;
+
+    const float s = smoothstep01(focus_t_);
+    yaw_ = Lerp(free_yaw_, focus_yaw_, s);
+    pitch_ = Lerp(free_pitch_, focus_pitch_, s);
+    camera_.position = Vector3Lerp(camera_free_pos, focus_cam_pos_, s);
+    camera_.target = Vector3Lerp(camera_free_target, focus_cam_target_, s);
+
+    if (!focusing_ && focus_t_ <= 0.0f) focused_slot_ = -1;
 }
 
 bool Game::consume_tap(Vector2& out_pos) {
@@ -295,6 +390,14 @@ void Game::start_round() {
     yaw_ = 0.5f;
     pitch_ = -0.15f;
     end_selected_idx_ = 0;
+
+    focused_slot_ = -1;
+    focusing_ = false;
+    focus_t_ = 0.0f;
+    free_yaw_ = yaw_;
+    free_pitch_ = pitch_;
+    camera_.position = camera_free_pos;
+    camera_.target = camera_free_target;
 
     pointer_down_ = false;
     dragging_ = false;
@@ -431,6 +534,10 @@ void Game::update_end_screen() {
 void Game::update(float dt) {
     if (paused_) return;
 
+    // Runs in every state so a focus move started mid-round still finishes
+    // (and hands the camera back) after the round ends.
+    update_focus(dt);
+
     switch (state_) {
         case State::MENU:
             yaw_ += menu_spin_speed * dt;
@@ -448,6 +555,12 @@ void Game::update(float dt) {
             break;
 
         case State::PLAYING: {
+            if (focused_slot_ >= 0 && focusing_ &&
+                    (IsKeyPressed(KEY_BACKSPACE) ||
+                     IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))) {
+                end_focus();
+            }
+
             handle_pointer(dt);
             bomb_.update(dt);
             strikes_ += bomb_.take_strike_events();
@@ -459,6 +572,7 @@ void Game::update(float dt) {
                 state_ = defused ? State::DEFUSED : State::EXPLODED;
                 if (time_left_ < 0.0f) time_left_ = 0.0f;
                 end_selected_idx_ = 0;
+                end_focus();   // hand the camera back for the end screen
                 // Discard any press still in flight so the gesture that ended
                 // the round cannot also press an end-screen button.
                 dragging_ = true;
@@ -544,7 +658,8 @@ void Game::draw_instructions() const {
 
     header("Controls");
     line("Drag (mouse or one finger) to rotate the bomb.");
-    line("Click or tap a module to interact with it.");
+    line("Click or tap a module to zoom in on it, then click its");
+    line("components. Tap away or press Backspace to step back.");
     y += instr_section_gap;
 
     header("Read the casing out loud");
@@ -605,8 +720,12 @@ void Game::draw_hud() const {
                                   bomb_.puzzle_module_count());
     DrawText(prog, sw - 20 - MeasureText(prog, 22), 24, 22, col_text_dim);
 
-    // Controls hint, bottom.
-    const char* hint = "Drag to rotate the bomb   -   tap a module to interact";
+    // Controls hint, bottom. What a tap does depends on the focus state.
+    const char* hint =
+        (focused_slot_ >= 0)
+            ? "Tap the module to work on it   -   tap away, right-click or "
+              "Backspace to step back"
+            : "Drag to rotate the bomb   -   tap a module to zoom in on it";
     DrawText(hint, sw / 2 - MeasureText(hint, 20) / 2, sh - 34, 20, col_hint);
 
     // End-of-round banner.

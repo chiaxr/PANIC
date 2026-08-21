@@ -29,9 +29,11 @@ tells the Defuser which to cut. A wrong cut earns a strike.
 | --- | --- |
 | Arrow keys | Move the title-screen / end-screen selection |
 | Enter / Space / Mouse click / Tap | Activate the selected button |
-| Backspace | Leave Settings or Instructions |
-| Drag (mouse / one finger) | Rotate the bomb |
-| Mouse click / Tap on a module | Interact with it (e.g. cut a wire) |
+| Backspace | Leave Settings or Instructions; step back out of a focused module |
+| Drag (mouse / one finger) | Rotate the bomb (free look only) |
+| Mouse click / Tap on a module | Zoom in on it |
+| Mouse click / Tap on a focused module | Interact with it (e.g. cut a wire) |
+| Right-click / Tap away from the module | Step back out to free look |
 | R | Start a fresh bomb (on the win/loss screen) |
 | Esc / window close | Quit the native desktop build |
 
