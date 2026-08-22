@@ -71,11 +71,26 @@ manual, not any other.
 | Mouse click / Tap on a module | Zoom in on it |
 | Mouse click / Tap on a focused module | Interact with it (e.g. cut a wire) |
 | Right-click / Tap away from the module | Step back out to free look |
-| R | Roll a new serial and start a fresh bomb (on the win/loss screen) |
+| R | Roll a new serial and start a fresh bomb (on the win/loss screen); roll a new seed (in debug mode) |
+| M | Back to the module list (in debug mode) |
 | Esc / window close | Quit the native desktop build |
 
 The web version is landscape-only. In portrait orientation the game pauses and a rotate prompt
 is shown until the viewport returns to landscape.
+
+## Debug mode
+
+The small **DEBUG** button in the title screen's bottom-right corner plays a single module on an
+otherwise empty bomb, for checking that a module behaves as its manual section says.
+
+Pick the module from the list and the serial it is built from — the serial alone decides the
+module's variables here, so the same serial always reproduces the same puzzle, and `RANDOM` (or
+`R` while playing) rolls another one. Needy modules are marked as such in the list.
+
+A debug round has no time limit: the countdown still runs, because the modules that read it (The
+Button's release digit, the needy wake-up timers) have to behave as they do in a real round, but
+it wraps back to full instead of running out. Strikes are counted and shown, but never detonate,
+and solving the module leaves the round running so it can be poked further.
 
 ## Native Build
 

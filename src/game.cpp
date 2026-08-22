@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "raylib.h"
@@ -93,6 +94,35 @@ constexpr int instr_line_step = 21;
 constexpr int instr_section_gap = 14;
 constexpr int instr_link_dy = 480;  // link row top, relative to panel top
 constexpr int instr_link_h = 46;
+
+// A debug round's seed is the serial alone; this stands in for the difficulty
+// the picker deliberately does not offer.
+constexpr int debug_seed_difficulty = 0;
+
+// Debug mode's way in: a small, quiet button in the title screen's bottom-right
+// corner. It is a development tool, so it stays clear of the two things a
+// player actually needs.
+constexpr int debug_corner_w = 110;
+constexpr int debug_corner_h = 30;
+constexpr int debug_corner_margin = 16;
+
+// Debug module picker: its own seed row, then a two-column grid of every
+// module template, then the two controls a debug round carries on screen.
+constexpr int debug_cols = 2;
+constexpr int debug_entry_h = 44;
+constexpr int debug_entry_gap_x = 16;
+constexpr int debug_entry_gap_y = 10;
+constexpr int debug_seed_label_y = 70;
+constexpr int debug_seed_top = 88;
+constexpr int debug_seed_h = 44;
+constexpr int debug_roll_w = 130;
+constexpr int debug_seed_gap = 12;
+constexpr int debug_body_top = 146;
+constexpr int debug_btn_w = 240;
+constexpr int debug_btn_h = 44;
+constexpr int debug_btn_gap = 20;
+constexpr int debug_btn_count = 2;
+constexpr int debug_bar_bottom_gap = 62;   // clear of the controls hint
 
 struct DialogLayout {
     int bx = 0;
@@ -210,6 +240,29 @@ void draw_button(const char* label, Rectangle rect, bool selected) {
              selected ? RAYWHITE : Color{180, 186, 196, 255});
 }
 
+// A left-aligned row for the debug picker: the module name, plus a tag on the
+// right for the modules that behave differently (the needy ones).
+void draw_list_entry(const char* label, const char* tag, Rectangle rect,
+                     bool selected) {
+    DrawRectangleRec(rect, selected ? Color{58, 30, 32, 235}
+                                    : Color{24, 25, 30, 215});
+    DrawRectangleLinesEx(rect, 2.0f,
+                         selected ? col_accent : Color{60, 63, 72, 220});
+
+    const int fs = 22;
+    DrawText(label, static_cast<int>(rect.x) + 14,
+             static_cast<int>(rect.y + (rect.height - fs) * 0.5f), fs,
+             selected ? RAYWHITE : Color{180, 186, 196, 255});
+
+    if (tag == nullptr) return;
+    const int tag_fs = 14;
+    DrawText(tag,
+             static_cast<int>(rect.x + rect.width) - 14 -
+                 MeasureText(tag, tag_fs),
+             static_cast<int>(rect.y + (rect.height - tag_fs) * 0.5f), tag_fs,
+             col_amber);
+}
+
 void draw_centered_text(const char* text, int y, int font_size, Color color) {
     DrawText(text, (GetScreenWidth() - MeasureText(text, font_size)) / 2, y,
              font_size, color);
@@ -229,6 +282,61 @@ Rectangle dialog_back_button_rect(const DialogLayout& l) {
     return Rectangle{static_cast<float>(x), static_cast<float>(y),
                      static_cast<float>(dialog_back_btn_w),
                      static_cast<float>(dialog_back_btn_h)};
+}
+
+DialogLayout debug_menu_layout(int sw, int sh) {
+    return centered_layout(760, 660, sw, sh);
+}
+
+Rectangle debug_corner_rect(int sw, int sh) {
+    return Rectangle{
+        static_cast<float>(sw - debug_corner_margin - debug_corner_w),
+        static_cast<float>(sh - debug_corner_margin - debug_corner_h),
+        static_cast<float>(debug_corner_w),
+        static_cast<float>(debug_corner_h)};
+}
+
+// The picker's seed row: the serial the bomb is built from, and a button that
+// rolls a fresh one.
+Rectangle debug_serial_rect(const DialogLayout& l) {
+    const int w = l.bw - instr_body_x_pad * 2 - debug_roll_w - debug_seed_gap;
+    return Rectangle{static_cast<float>(l.bx + instr_body_x_pad),
+                     static_cast<float>(l.by + debug_seed_top),
+                     static_cast<float>(w), static_cast<float>(debug_seed_h)};
+}
+
+Rectangle debug_roll_rect(const DialogLayout& l) {
+    const Rectangle box = debug_serial_rect(l);
+    return Rectangle{box.x + box.width + debug_seed_gap, box.y,
+                     static_cast<float>(debug_roll_w),
+                     static_cast<float>(debug_seed_h)};
+}
+
+// Entries fill each column top to bottom before starting the next one.
+int debug_grid_rows(int count) {
+    return (count + debug_cols - 1) / debug_cols;
+}
+
+Rectangle debug_entry_rect(int idx, const DialogLayout& l, int rows) {
+    const int col = rows > 0 ? idx / rows : 0;
+    const int row = rows > 0 ? idx % rows : 0;
+    const int w = (l.bw - instr_body_x_pad * 2 -
+                   debug_entry_gap_x * (debug_cols - 1)) / debug_cols;
+    const int x = l.bx + instr_body_x_pad + col * (w + debug_entry_gap_x);
+    const int y = l.by + debug_body_top + row * (debug_entry_h + debug_entry_gap_y);
+    return Rectangle{static_cast<float>(x), static_cast<float>(y),
+                     static_cast<float>(w), static_cast<float>(debug_entry_h)};
+}
+
+// The debug round's own buttons, sat above the controls hint.
+Rectangle debug_button_rect(int idx, int sw, int sh) {
+    const int span =
+        debug_btn_w * debug_btn_count + debug_btn_gap * (debug_btn_count - 1);
+    const int x = (sw - span) / 2 + idx * (debug_btn_w + debug_btn_gap);
+    const int y = sh - debug_bar_bottom_gap - debug_btn_h;
+    return Rectangle{static_cast<float>(x), static_cast<float>(y),
+                     static_cast<float>(debug_btn_w),
+                     static_cast<float>(debug_btn_h)};
 }
 
 Rectangle manual_link_rect(const DialogLayout& l) {
@@ -279,15 +387,34 @@ void Game::setup() {
     serial_rng_.seed(std::random_device{}());
     randomize_serial();
     rebuild_bomb();
+
+    // The debug picker's list: every module template, with the needy ones
+    // flagged, since a needy module never reaches a solved state. Probing each
+    // template once here keeps the picker from instantiating puzzles per frame.
+    register_builtin_puzzles();
+    for (const std::string& name : Bomb::module_template_names()) {
+        const std::unique_ptr<Puzzle> probe =
+            PuzzleRegistry::instance().create(name);
+        if (!probe) continue;
+        debug_modules_.push_back(name);
+        debug_needy_.push_back(probe->is_needy());
+    }
 }
 
 void Game::rebuild_bomb() {
     bomb_.unload();
-    rng_ = seeded_engine(serial_, difficulty_);
-    bomb_.setup(rng_, serial_, difficulty_);
+    // A debug round replaces the whole layout with the one module under test,
+    // and takes the difficulty out of its seed: the slider is not on the debug
+    // picker, so leaving it in would make the same serial build a different
+    // module depending on a setting that screen never shows.
+    const bool debug = !debug_module_.empty();
+    rng_ = seeded_engine(serial_, debug ? debug_seed_difficulty : difficulty_);
+    bomb_.setup(rng_, serial_, difficulty_,
+                debug ? debug_module_.c_str() : nullptr);
 
     built_serial_ = serial_;
     built_difficulty_ = difficulty_;
+    built_debug_module_ = debug_module_;
     bomb_pristine_ = true;
 }
 
@@ -296,7 +423,8 @@ void Game::refresh_menu_bomb() {
     // is complete again.
     if (!serial_is_valid()) return;
     if (bomb_pristine_ && built_serial_ == serial_ &&
-            built_difficulty_ == difficulty_) {
+            built_difficulty_ == difficulty_ &&
+            built_debug_module_ == debug_module_) {
         return;
     }
     rebuild_bomb();
@@ -511,6 +639,26 @@ bool Game::consume_tap(Vector2& out_pos) {
     return tapped;
 }
 
+// A screen's highlight belongs to whichever device is steering it. Moving or
+// clicking the pointer hands it over to the pointer, so the lit button is the
+// one under the cursor and nothing is lit when the cursor is off them all;
+// pressing an arrow key hands it back to the keyboard selection.
+void Game::update_nav_device() {
+    const Vector2 delta = GetMouseDelta();
+    if (delta.x != 0.0f || delta.y != 0.0f || GetTouchPointCount() > 0 ||
+            IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        pointer_nav_ = true;
+    }
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_DOWN) ||
+            IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT)) {
+        pointer_nav_ = false;
+    }
+}
+
+bool Game::button_lit(int idx, int selected_idx, Rectangle rect) const {
+    return pointer_nav_ ? rect_hovered(rect) : idx == selected_idx;
+}
+
 void Game::randomize_serial() {
     serial_ = BombAttributes::random_serial(serial_rng_);
 }
@@ -572,6 +720,166 @@ void Game::activate_menu_button(int idx) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Debug mode. A debug round puts one module, alone, on an otherwise empty
+// bomb: the clock wraps instead of running out, strikes are counted but never
+// detonate, and solving the module leaves the round running so it can be
+// poked further. debug_module_ names the module and is what makes a round a
+// debug round.
+// ---------------------------------------------------------------------------
+
+const Puzzle* Game::debug_puzzle() const {
+    for (const auto& slot : bomb_.slots()) {
+        if (slot.puzzle) return slot.puzzle.get();
+    }
+    return nullptr;
+}
+
+void Game::start_debug_round(const std::string& module_name) {
+    serial_focused_ = false;
+    debug_module_ = module_name;
+    debug_ui_press_ = false;
+    debug_press_idx_ = -1;
+    start_round();
+}
+
+void Game::leave_debug() {
+    debug_module_.clear();
+    debug_ui_press_ = false;
+    debug_press_idx_ = -1;
+    end_focus();   // hand the camera back before the picker comes up
+
+    // Discard any press still in flight so the gesture that left the round
+    // cannot also pick the next module.
+    pointer_down_ = pointer_down();
+    dragging_ = true;
+    press_slot_ = -1;
+
+    state_ = State::DEBUG_MENU;
+}
+
+void Game::update_debug_menu() {
+    const DialogLayout l =
+        debug_menu_layout(GetScreenWidth(), GetScreenHeight());
+    const int count = static_cast<int>(debug_modules_.size());
+    const int rows = debug_grid_rows(count);
+
+    // The seed box is the same control the title screen has, editing the same
+    // serial: a debug round is built from a seed like any other round.
+    update_serial_entry();
+    if (serial_focused_ && IsKeyPressed(KEY_ENTER)) {
+        serial_focused_ = false;
+        return;
+    }
+
+    if (count > 0 && !serial_focused_) {
+        if (IsKeyPressed(KEY_DOWN)) {
+            debug_selected_idx_ = (debug_selected_idx_ + 1) % count;
+        }
+        if (IsKeyPressed(KEY_UP)) {
+            debug_selected_idx_ = (debug_selected_idx_ - 1 + count) % count;
+        }
+        // Left and right step a whole column, which is how the grid is filled.
+        if (IsKeyPressed(KEY_RIGHT)) {
+            debug_selected_idx_ = (debug_selected_idx_ + rows) % count;
+        }
+        if (IsKeyPressed(KEY_LEFT)) {
+            debug_selected_idx_ = (debug_selected_idx_ - rows + count) % count;
+        }
+        for (int i = 0; i < count; ++i) {
+            if (rect_hovered(debug_entry_rect(i, l, rows))) {
+                debug_selected_idx_ = i;
+            }
+        }
+        // A serial that no bomb can be built from is refused here, exactly as
+        // START refuses it on the title screen.
+        if ((IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) &&
+                serial_is_valid()) {
+            start_debug_round(debug_modules_[debug_selected_idx_]);
+            return;
+        }
+    }
+
+    Vector2 tap{};
+    const bool tapped = consume_tap(tap);
+
+    // Backspace edits the serial while the box has focus, so it only backs out
+    // of the picker when it does not.
+    const bool tapped_back =
+        tapped && CheckCollisionPointRec(tap, dialog_back_button_rect(l));
+    if ((!serial_focused_ && IsKeyPressed(KEY_BACKSPACE)) || tapped_back) {
+        serial_focused_ = false;
+        menu_selected_idx_ = 0;
+        state_ = State::MENU;
+        return;
+    }
+
+    if (!tapped) return;
+
+    serial_focused_ = CheckCollisionPointRec(tap, debug_serial_rect(l));
+    if (serial_focused_) return;
+
+    if (CheckCollisionPointRec(tap, debug_roll_rect(l))) {
+        randomize_serial();
+        return;
+    }
+
+    if (!serial_is_valid()) return;
+    for (int i = 0; i < count; ++i) {
+        if (CheckCollisionPointRec(tap, debug_entry_rect(i, l, rows))) {
+            start_debug_round(debug_modules_[i]);
+            return;
+        }
+    }
+}
+
+bool Game::update_debug_controls() {
+    // A new seed rebuilds the same module with fresh variables, which is the
+    // quick way to walk a module through many of its cases.
+    if (IsKeyPressed(KEY_R)) {
+        randomize_serial();
+        start_debug_round(debug_module_);
+        return true;
+    }
+    if (IsKeyPressed(KEY_M)) {
+        leave_debug();
+        return true;
+    }
+
+    const int sw = GetScreenWidth();
+    const int sh = GetScreenHeight();
+    const bool down = pointer_down();
+    const Vector2 pos = pointer_pos();
+
+    // Claim a press that starts on a button, and keep it until it is released,
+    // so the same gesture never reaches the bomb behind.
+    if (down && !debug_ui_press_ && !pointer_down_) {
+        for (int i = 0; i < debug_btn_count; ++i) {
+            if (CheckCollisionPointRec(pos, debug_button_rect(i, sw, sh))) {
+                debug_ui_press_ = true;
+                debug_press_idx_ = i;
+                break;
+            }
+        }
+    }
+    if (!debug_ui_press_) return false;
+
+    if (!down) {
+        const int idx = debug_press_idx_;
+        debug_ui_press_ = false;
+        debug_press_idx_ = -1;
+        if (CheckCollisionPointRec(pos, debug_button_rect(idx, sw, sh))) {
+            if (idx == 0) {
+                randomize_serial();
+                start_debug_round(debug_module_);
+            } else {
+                leave_debug();
+            }
+        }
+    }
+    return true;
+}
+
 // Typing into the serial box. Only accepts serial characters, and lower case
 // is folded up so the box always shows what the casing will print.
 void Game::update_serial_entry() {
@@ -628,7 +936,8 @@ void Game::update_menu() {
         return;
     }
 
-    // Mouse hover / touch contact moves the selection.
+    // Hover and touch contact also move the selection, so pressing Enter picks
+    // the button the pointer is lighting up rather than one somewhere else.
     for (int i = 0; i < menu_count; ++i) {
         const Rectangle r = menu_button_rect(i, sw, sh);
         if (rect_hovered(r)) menu_selected_idx_ = i;
@@ -653,6 +962,12 @@ void Game::update_menu() {
     // Clicking the box starts editing; clicking anywhere else stops.
     serial_focused_ = CheckCollisionPointRec(tap, serial_box_rect(sw, sh));
     if (serial_focused_) return;
+
+    if (CheckCollisionPointRec(tap, debug_corner_rect(sw, sh))) {
+        debug_selected_idx_ = 0;
+        state_ = State::DEBUG_MENU;
+        return;
+    }
 
     for (int i = 0; i < menu_count; ++i) {
         if (CheckCollisionPointRec(tap, menu_button_rect(i, sw, sh))) {
@@ -741,6 +1056,8 @@ void Game::update_end_screen() {
 void Game::update(float dt) {
     if (paused_) return;
 
+    update_nav_device();
+
     // Runs in every state so a focus move started mid-round still finishes
     // (and hands the camera back) after the round ends.
     update_focus(dt);
@@ -754,6 +1071,11 @@ void Game::update(float dt) {
         case State::INSTRUCTIONS:
             yaw_ += menu_spin_speed * dt;
             update_instructions();
+            break;
+
+        case State::DEBUG_MENU:
+            yaw_ += menu_spin_speed * dt;
+            update_debug_menu();
             break;
 
         case State::PLAYING: {
@@ -774,7 +1096,11 @@ void Game::update(float dt) {
                 end_focus();
             }
 
-            handle_pointer(dt);
+            // The debug bar owns the pointer while a press sits on it, and
+            // can end the round outright (back to the picker).
+            const bool debug_bar_active = debug_mode() && update_debug_controls();
+            if (state_ != State::PLAYING) break;
+            if (!debug_bar_active) handle_pointer(dt);
 
             BombContext ctx;
             ctx.strikes = strikes_;
@@ -783,6 +1109,16 @@ void Game::update(float dt) {
             strikes_ += bomb_.take_strike_events();
 
             time_left_ -= dt;
+
+            if (debug_mode()) {
+                // No time limit. The clock still runs, because the modules
+                // that read it (The Button's release digit, the needy wake-up
+                // timers) have to behave as they do in a real round, but it
+                // wraps round instead of running out. Strikes are counted and
+                // never detonate, and a solved module is left on screen.
+                if (time_left_ <= 0.0f) time_left_ += round_seconds;
+                break;
+            }
 
             const bool defused = bomb_.all_solved();
             if (defused || strikes_ >= max_strikes || time_left_ <= 0.0f) {
@@ -893,7 +1229,7 @@ void Game::draw_menu() const {
                      Color{110, 100, 100, 255});
             continue;
         }
-        draw_button(labels[i], r, i == menu_selected_idx_);
+        draw_button(labels[i], r, button_lit(i, menu_selected_idx_, r));
     }
 
     if (!valid) {
@@ -908,6 +1244,20 @@ void Game::draw_menu() const {
         "Click the serial to edit   -   the same serial and difficulty "
         "always builds the same bomb",
         sh - 32, 16, col_hint);
+
+    // Quiet corner button into debug mode.
+    const Rectangle dbg = debug_corner_rect(sw, sh);
+    const bool dbg_hover = rect_hovered(dbg);
+    DrawRectangleRec(dbg, dbg_hover ? Color{30, 32, 38, 220}
+                                    : Color{20, 21, 25, 150});
+    DrawRectangleLinesEx(dbg, 1.0f, dbg_hover ? col_text_dim
+                                              : Color{52, 55, 62, 200});
+    const int dbg_fs = 15;
+    DrawText("DEBUG",
+             static_cast<int>(dbg.x + (dbg.width -
+                                       MeasureText("DEBUG", dbg_fs)) * 0.5f),
+             static_cast<int>(dbg.y + (dbg.height - dbg_fs) * 0.5f), dbg_fs,
+             dbg_hover ? col_text : col_hint);
 }
 
 void Game::draw_instructions() const {
@@ -978,7 +1328,133 @@ void Game::draw_instructions() const {
                        rect_hovered(dialog_back_button_rect(l)));
 }
 
+void Game::draw_debug_menu() const {
+    const DialogLayout l =
+        debug_menu_layout(GetScreenWidth(), GetScreenHeight());
+    draw_dialog_panel(l, "DEBUG - PLAY ONE MODULE");
+
+    draw_centered_text(
+        "One module on an empty bomb: no time limit, no detonation",
+        l.by + 46, 16, col_text_dim);
+
+    // ---- the seed this module will be built from ----
+    const bool valid = serial_is_valid();
+    const Rectangle box = debug_serial_rect(l);
+    DrawText("SEED   -   the same seed always builds the same module",
+             l.bx + instr_body_x_pad, l.by + debug_seed_label_y, 14,
+             col_text_dim);
+
+    DrawRectangleRec(box, Color{18, 30, 24, 255});
+    DrawRectangleLinesEx(box, 2.0f,
+                         serial_focused_ ? col_accent
+                                         : (valid ? Color{70, 72, 80, 255}
+                                                  : Color{150, 90, 60, 255}));
+    const int serial_fs = 28;
+    const int serial_x = static_cast<int>(box.x) + 14;
+    const int serial_y =
+        static_cast<int>(box.y + (box.height - serial_fs) * 0.5f);
+    DrawText(serial_.c_str(), serial_x, serial_y, serial_fs,
+             Color{120, 240, 150, 255});
+    if (serial_focused_ && static_cast<int>(GetTime() * 2.0f) % 2 == 0 &&
+            static_cast<int>(serial_.size()) < BombAttributes::serial_length) {
+        DrawRectangle(serial_x + MeasureText(serial_.c_str(), serial_fs) + 4,
+                      serial_y, 3, serial_fs, Color{120, 240, 150, 255});
+    }
+
+    const Rectangle roll = debug_roll_rect(l);
+    const bool roll_hover = rect_hovered(roll);
+    DrawRectangleRec(roll, roll_hover ? Color{58, 30, 32, 235}
+                                      : Color{24, 25, 30, 215});
+    DrawRectangleLinesEx(roll, 2.0f,
+                         roll_hover ? col_accent : Color{60, 63, 72, 220});
+    const int roll_fs = 18;
+    DrawText("RANDOM",
+             static_cast<int>(roll.x + (roll.width -
+                                        MeasureText("RANDOM", roll_fs)) * 0.5f),
+             static_cast<int>(roll.y + (roll.height - roll_fs) * 0.5f), roll_fs,
+             roll_hover ? RAYWHITE : Color{180, 186, 196, 255});
+
+    // ---- the modules ----
+    const int count = static_cast<int>(debug_modules_.size());
+    const int rows = debug_grid_rows(count);
+    for (int i = 0; i < count; ++i) {
+        const Rectangle r = debug_entry_rect(i, l, rows);
+        // An unusable serial builds nothing, so nothing lights up either.
+        draw_list_entry(debug_modules_[static_cast<size_t>(i)].c_str(),
+                        debug_needy_[static_cast<size_t>(i)] ? "NEEDY" : nullptr,
+                        r, valid && button_lit(i, debug_selected_idx_, r));
+    }
+
+    if (!valid) {
+        // Every module reads the serial, so nothing can be built until it is
+        // one a bomb could actually carry.
+        draw_centered_text("The serial needs 6 characters and at least one digit",
+                           l.by + l.bh - dialog_footer_block_h - 24, 16,
+                           Color{200, 130, 90, 255});
+    }
+
+    draw_dialog_footer(
+        l, "Click a module to play it   -   R rolls a new seed while playing",
+        rect_hovered(dialog_back_button_rect(l)));
+}
+
+void Game::draw_debug_hud() const {
+    const int sw = GetScreenWidth();
+    const int sh = GetScreenHeight();
+
+    // The clock keeps ticking (modules read it) but never ends the round.
+    const int total =
+        static_cast<int>(std::ceil(time_left_ < 0 ? 0 : time_left_));
+    const char* clock = TextFormat("%02d:%02d", total / 60, total % 60);
+    const int clock_size = 48;
+    DrawText(clock, sw / 2 - MeasureText(clock, clock_size) / 2, 16, clock_size,
+             RAYWHITE);
+    draw_centered_text("NO TIME LIMIT   -   THE CLOCK JUST WRAPS ROUND",
+                       16 + clock_size + 6, 16, col_hint);
+
+    // What is under test, top-left, with the strikes it has raised.
+    DrawText("DEBUG MODULE", 20, 20, 20, col_accent);
+    DrawText(debug_module_.c_str(), 20, 46, 26, col_text);
+    DrawText(TextFormat("STRIKES   %d", strikes_), 20, 82, 20, col_text_dim);
+    DrawText("(counted, never detonates)", 20, 106, 16, col_hint);
+
+    // Whether the module has reached its solved state, top-right.
+    const Puzzle* puzzle = debug_puzzle();
+    const char* status = "MODULE MISSING";
+    Color status_color = col_accent;
+    if (puzzle != nullptr && puzzle->is_needy()) {
+        status = "NEEDY   -   NEVER DISARMS";
+        status_color = col_amber;
+    } else if (puzzle != nullptr) {
+        status = puzzle->is_solved() ? "SOLVED" : "UNSOLVED";
+        status_color = puzzle->is_solved() ? col_good : col_text_dim;
+    }
+    DrawText(status, sw - 20 - MeasureText(status, 22), 24, 22, status_color);
+
+    const char* seed = TextFormat("SEED   %s", serial_.c_str());
+    DrawText(seed, sw - 20 - MeasureText(seed, 18), 56, 18, col_hint);
+
+    const char* labels[debug_btn_count] = {"NEW SEED  (R)", "MODULES  (M)"};
+    for (int i = 0; i < debug_btn_count; ++i) {
+        draw_button(labels[i], debug_button_rect(i, sw, sh),
+                    debug_press_idx_ == i ||
+                        rect_hovered(debug_button_rect(i, sw, sh)));
+    }
+
+    const char* hint =
+        (focused_slot_ >= 0)
+            ? "Tap the module to work on it   -   tap away, right-click or "
+              "Backspace to step back"
+            : "Drag to rotate the bomb   -   tap the module to zoom in on it";
+    DrawText(hint, sw / 2 - MeasureText(hint, 20) / 2, sh - 34, 20, col_hint);
+}
+
 void Game::draw_hud() const {
+    if (debug_mode()) {
+        draw_debug_hud();
+        return;
+    }
+
     const int sw = GetScreenWidth();
     const int sh = GetScreenHeight();
 
@@ -1029,8 +1505,8 @@ void Game::draw_hud() const {
         const int top_y = sh / 2 + 10;
         const char* labels[end_count] = {"NEW BOMB", "MENU"};
         for (int i = 0; i < end_count; ++i) {
-            draw_button(labels[i], end_button_rect(i, sw, top_y),
-                        i == end_selected_idx_);
+            const Rectangle r = end_button_rect(i, sw, top_y);
+            draw_button(labels[i], r, button_lit(i, end_selected_idx_, r));
         }
 
         draw_centered_text("R for a new bomb   -   arrow keys and Enter to choose",
@@ -1055,6 +1531,7 @@ void Game::draw() {
     switch (state_) {
         case State::MENU:         draw_menu();         break;
         case State::INSTRUCTIONS: draw_instructions(); break;
+        case State::DEBUG_MENU:   draw_debug_menu();   break;
         default:                  draw_hud();          break;
     }
     EndDrawing();

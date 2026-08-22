@@ -59,10 +59,20 @@ class Bomb {
     // `rng` must already be seeded from the serial and difficulty: the same
     // serial and module count always builds the same bomb. `module_count` is
     // how many of the six bays get a module.
-    void setup(std::mt19937& rng, const std::string& serial, int module_count);
+    //
+    // `only_module`, when non-null, names a single template to put in the
+    // front-centre bay on its own, leaving every other bay empty. Debug mode
+    // uses this to exercise one module at a time; `module_count` is ignored.
+    void setup(std::mt19937& rng, const std::string& serial, int module_count,
+               const char* only_module = nullptr);
 
     // Bays available on the casing; the difficulty slider picks 1..this many.
     static constexpr int max_modules = 6;
+
+    // Every module template that can appear on a bomb, in the fixed order bomb
+    // generation draws from. Debug mode lists these to pick one.
+    static const std::vector<std::string>& module_template_names();
+
     void unload();
 
     // Queue a tap for the module in the given slot (module-local pixel coords).
@@ -91,7 +101,8 @@ class Bomb {
     int solved_module_count() const;
 
 private:
-    void build_slots(std::mt19937& rng, int module_count);
+    void build_slots(std::mt19937& rng, int module_count,
+                     const char* only_module);
     void build_info_panels();
     void draw_info_panel(const InfoPanel& panel) const;
 

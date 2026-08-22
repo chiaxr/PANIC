@@ -9,9 +9,12 @@
 // the bomb flat and zooms the camera onto that bay, and only the focused module
 // accepts taps on its components.
 //
-// It also owns the front-end states drawn over that scene: the title menu and
-// the Instructions dialog. The bomb keeps rendering (and slowly spinning)
-// behind them as a backdrop.
+// It also owns the front-end states drawn over that scene: the title menu, the
+// Instructions dialog and the debug module picker. The bomb keeps rendering
+// (and slowly spinning) behind them as a backdrop.
+//
+// Debug mode plays one chosen module on an otherwise empty bomb, with no time
+// limit and no detonation, so a module can be exercised on its own.
 //
 // The title screen carries the run's seed: a serial number the players can type
 // and a difficulty slider setting the module count. Together those seed every
@@ -19,6 +22,7 @@
 
 #include <random>
 #include <string>
+#include <vector>
 
 #include "raylib.h"
 
@@ -33,7 +37,9 @@ public:
     void set_paused(bool paused) { paused_ = paused; }
 
 private:
-    enum class State { MENU, INSTRUCTIONS, PLAYING, DEFUSED, EXPLODED };
+    enum class State {
+        MENU, INSTRUCTIONS, DEBUG_MENU, PLAYING, DEFUSED, EXPLODED
+    };
 
     void handle_pointer(float dt);
     void draw_hud() const;
@@ -64,6 +70,28 @@ private:
     void activate_menu_button(int idx);
     void draw_menu() const;
     void draw_instructions() const;
+
+    // Which device is steering the menus, and so what a screen draws lit: the
+    // button under the pointer while the pointer is being used, the arrow-key
+    // selection once the keys are. Called once a frame.
+    void update_nav_device();
+    // True when this button should be drawn lit.
+    bool button_lit(int idx, int selected_idx, Rectangle rect) const;
+
+    // ---- Debug mode: one module, no time limit, no detonation ----
+    // A round is a debug round exactly when it names a module to exercise.
+    bool debug_mode() const { return !debug_module_.empty(); }
+    void update_debug_menu();
+    void draw_debug_menu() const;
+    // Build a bomb carrying only this module and start playing it.
+    void start_debug_round(const std::string& module_name);
+    void leave_debug();
+    // The debug round's own controls (new seed / back to the picker). Returns
+    // true while the pointer belongs to them, so the bomb never sees the press.
+    bool update_debug_controls();
+    void draw_debug_hud() const;
+    // The single module a debug round is running, or null.
+    const Puzzle* debug_puzzle() const;
 
     // Fresh bomb + reset round state, then enter State::PLAYING.
     void start_round();
@@ -124,6 +152,18 @@ private:
     // Menu / end-screen selection.
     int menu_selected_idx_ = 0;
     int end_selected_idx_ = 0;
+    // Set while the pointer is the thing steering the menus, so its highlight
+    // follows the cursor (and leaves with it) instead of the arrow keys'.
+    bool pointer_nav_ = false;
+
+    // Debug mode. debug_module_ names the module being exercised and is empty
+    // for a normal round; it is also part of what the bomb was built from.
+    std::string debug_module_;
+    std::vector<std::string> debug_modules_;   // every template, for the picker
+    std::vector<bool> debug_needy_;            // which of those are needy
+    int debug_selected_idx_ = 0;
+    bool debug_ui_press_ = false;   // a press that started on a debug button
+    int debug_press_idx_ = -1;
 
     // The run's seed. The serial the players type, together with the module
     // count, seeds everything about the bomb, so the same pair always replays
@@ -141,6 +181,7 @@ private:
     // it, so it cannot go back to being the menu backdrop.
     std::string built_serial_;
     int built_difficulty_ = -1;
+    std::string built_debug_module_;
     bool bomb_pristine_ = false;
 
     bool paused_ = false;

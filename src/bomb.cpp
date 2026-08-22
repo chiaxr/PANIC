@@ -150,12 +150,18 @@ void draw_empty_bay() {
 
 }   // namespace
 
-void Bomb::setup(std::mt19937& rng, const std::string& serial,
-                 int module_count) {
+const std::vector<std::string>& Bomb::module_template_names() {
+    static const std::vector<std::string> names(module_templates.begin(),
+                                                module_templates.end());
+    return names;
+}
+
+void Bomb::setup(std::mt19937& rng, const std::string& serial, int module_count,
+                 const char* only_module) {
     register_builtin_puzzles();
 
     attrs_ = BombAttributes::random(rng, serial);
-    build_slots(rng, module_count);
+    build_slots(rng, module_count, only_module);
     build_info_panels();
 
     for (auto& slot : slots_) {
@@ -200,7 +206,8 @@ void Bomb::unload() {
     pending_.clear();
 }
 
-void Bomb::build_slots(std::mt19937& rng, int module_count) {
+void Bomb::build_slots(std::mt19937& rng, int module_count,
+                       const char* only_module) {
     slots_.clear();
 
     auto make_slot = [](float x, bool front, std::unique_ptr<Puzzle> puzzle) {
@@ -218,6 +225,19 @@ void Bomb::build_slots(std::mt19937& rng, int module_count) {
     };
 
     const auto& reg = PuzzleRegistry::instance();
+
+    // Debug mode: one named module, alone in the front-centre bay. Choosing it
+    // draws nothing from the pool, so the rng reaches its init() in the same
+    // state whichever module was picked -- one serial, one set of variables.
+    if (only_module != nullptr) {
+        for (size_t i = 0; i < slot_count; ++i) {
+            const bool front = i < slot_x.size();
+            slots_.push_back(make_slot(
+                slot_x[i % slot_x.size()], front,
+                i == 1 ? reg.create(only_module) : nullptr));
+        }
+        return;
+    }
 
     // Draw six distinct templates for the six bays. Bays go empty only while
     // there are fewer than six templates registered.
