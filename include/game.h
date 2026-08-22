@@ -129,6 +129,7 @@ private:
     float intro_from_yaw_ = 0.0f;
     float intro_from_pitch_ = 0.0f;
     float intro_to_yaw_ = 0.0f;
+    float intro_to_pitch_ = 0.0f;
 
     // Module focus. focused_slot_ stays set while the move animates back out,
     // so free-look rotation stays locked until the camera is home again.

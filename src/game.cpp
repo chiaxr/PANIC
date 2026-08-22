@@ -14,7 +14,11 @@ namespace {
 
 constexpr float rot_speed = 0.008f;     // radians per pixel dragged
 constexpr float drag_threshold = 8.0f;  // px of motion before a press is a drag
-constexpr float pitch_limit = 1.45f;
+// Just short of straight up/down. The pose keeps roll at zero by turning
+// pitch about the camera's horizontal axis last, which holds the bomb's up
+// axis vertical on screen only while it stays this side of vertical: past it
+// the bomb reads as upside down and both drags invert.
+constexpr float pitch_limit = PI * 0.5f - 0.05f;
 constexpr float menu_spin_speed = 0.25f;  // radians per second on the menu
 
 // Free-look camera, and the module-focus move that swings away from it.
@@ -34,6 +38,15 @@ float wrap_pi(float radians) {
 }
 
 float smoothstep01(float t) { return t * t * (3.0f - 2.0f * t); }
+
+// The bomb's pose. Yaw turns first about the bomb's own up axis, then pitch
+// tips the result about the camera's horizontal axis — so a vertical drag
+// always tilts the bomb the same way on screen, whichever face is towards the
+// player. (Pitching first would tilt about the bomb's local X axis, which
+// points the other way once the back is turned to the camera.)
+Matrix pose_matrix(float yaw, float pitch) {
+    return MatrixMultiply(MatrixRotateY(yaw), MatrixRotateX(pitch));
+}
 
 // The Expert's manual. raylib's OpenURL is implemented per platform (desktop
 // opens the system browser, web opens a new tab), so the call site stays
@@ -432,9 +445,7 @@ void Game::refresh_menu_bomb() {
 
 void Game::unload() { bomb_.unload(); }
 
-Matrix Game::bomb_transform() const {
-    return MatrixMultiply(MatrixRotateX(pitch_), MatrixRotateY(yaw_));
-}
+Matrix Game::bomb_transform() const { return pose_matrix(yaw_, pitch_); }
 
 int Game::pick_module(Vector2 screen_pos, Vector2& out_module_pixel) const {
     const Ray ray = GetScreenToWorldRay(screen_pos, camera_);
@@ -499,9 +510,16 @@ void Game::handle_pointer(float dt) {
         if (Vector2Distance(pos, press_pos_) > drag_threshold) dragging_ = true;
         if (dragging_ && focused_slot_ < 0) {
             intro_t_ = 1.0f;   // the player is steering now
-            yaw_ += delta.x * rot_speed;
-            // Vertical drag is inverted: dragging down tips the top of the bomb away.
-            pitch_ = Clamp(pitch_ + delta.y * rot_speed, -pitch_limit, pitch_limit);
+            // Dragging down rolls the top of the bomb away and its top face
+            // towards the player. Pitch turns about the camera's horizontal
+            // axis, so it reads the same whichever face is towards the
+            // player, and stops short of vertical so the bomb never tips over
+            // into reading upside down (which would invert both drags). Yaw
+            // wraps instead, so spinning on and on never winds it out of
+            // range.
+            yaw_ = wrap_pi(yaw_ + delta.x * rot_speed);
+            pitch_ = Clamp(pitch_ + delta.y * rot_speed, -pitch_limit,
+                           pitch_limit);
             free_yaw_ = yaw_;
             free_pitch_ = pitch_;
         }
@@ -580,8 +598,7 @@ void Game::begin_focus(int slot_index) {
 
     // Where that leaves the module in world space, and how far back the camera
     // has to sit for the face to fill most of the viewport height.
-    const Matrix m =
-        MatrixMultiply(MatrixRotateX(focus_pitch_), MatrixRotateY(focus_yaw_));
+    const Matrix m = pose_matrix(focus_yaw_, focus_pitch_);
     focus_cam_target_ = Vector3Transform(q.center, m);
     const float dist = q.half_h / std::tan(camera_.fovy * 0.5f * DEG2RAD) *
                        focus_zoom_margin;
@@ -688,11 +705,12 @@ void Game::start_round() {
     end_selected_idx_ = 0;
 
     // Settle into the round's pose from wherever the title screen's spin left
-    // the bomb. The menu winds yaw_ up without bound, so aim for the nearest
-    // rotation congruent to the target rather than unwinding all those turns.
+    // the bomb, taking the short way round on both axes rather than unwinding
+    // the turns the menu spin (or a drag) put in.
     intro_from_yaw_ = yaw_;
     intro_from_pitch_ = pitch_;
     intro_to_yaw_ = yaw_ + wrap_pi(round_yaw - yaw_);
+    intro_to_pitch_ = pitch_ + wrap_pi(round_pitch - pitch_);
     intro_t_ = 0.0f;
 
     focused_slot_ = -1;
@@ -1064,17 +1082,17 @@ void Game::update(float dt) {
 
     switch (state_) {
         case State::MENU:
-            yaw_ += menu_spin_speed * dt;
+            yaw_ = wrap_pi(yaw_ + menu_spin_speed * dt);
             update_menu();
             break;
 
         case State::INSTRUCTIONS:
-            yaw_ += menu_spin_speed * dt;
+            yaw_ = wrap_pi(yaw_ + menu_spin_speed * dt);
             update_instructions();
             break;
 
         case State::DEBUG_MENU:
-            yaw_ += menu_spin_speed * dt;
+            yaw_ = wrap_pi(yaw_ + menu_spin_speed * dt);
             update_debug_menu();
             break;
 
@@ -1085,7 +1103,7 @@ void Game::update(float dt) {
                 intro_t_ = std::min(1.0f, intro_t_ + dt / settle_time);
                 const float s = smoothstep01(intro_t_);
                 yaw_ = Lerp(intro_from_yaw_, intro_to_yaw_, s);
-                pitch_ = Lerp(intro_from_pitch_, round_pitch, s);
+                pitch_ = Lerp(intro_from_pitch_, intro_to_pitch_, s);
                 free_yaw_ = yaw_;
                 free_pitch_ = pitch_;
             }
