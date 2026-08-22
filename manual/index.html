@@ -4,88 +4,355 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PANIC &mdash; Bomb Defusal Manual</title>
+    <script>
+        try {
+            var t = localStorage.getItem("panic-manual-theme");
+            if (t === "dark" || t === "light") {
+                document.documentElement.setAttribute("data-theme", t);
+            }
+        } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Spectral:ital,wght@0,400;0,600;1,400;1,600&family=Roboto+Mono:wght@400;500;700&display=swap">
     <style>
-        :root { color-scheme: light dark; }
+        /* ---- palette: day issue ---- */
+        :root {
+            color-scheme: light;
+            --board:    #d6cdb2;
+            --sheet:    #e9e1cb;
+            --ink:      #16140e;
+            --ink-soft: #5a5443;
+            --rule:     #b6aa8b;
+            --bar-bg:   #16140e;
+            --bar-ink:  #e9e1cb;
+            --bar-dim:  #b3ac93;
+            --accent:   #47503c;
+            --alert:    #8e2b21;
+            --alert-ink:#e9e1cb;
+            --warn-bg:  #efe3d3;
+            --zebra:    rgba(71, 80, 60, 0.07);
+            --mark:     #2f6fb0;
+            --led-on:   #e8c840;
+            --shadow:   0 14px 34px rgba(0, 0, 0, 0.22);
+        }
+        /* ---- palette: night issue ---- */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                color-scheme: dark;
+                --board:    #131310;
+                --sheet:    #1c1c16;
+                --ink:      #e2d9c1;
+                --ink-soft: #9b937c;
+                --rule:     #3c3b2f;
+                --bar-bg:   #2f3428;
+                --bar-ink:  #e7dec4;
+                --bar-dim:  #9aa287;
+                --accent:   #a3b28c;
+                --alert:    #dd6a58;
+                --alert-ink:#1c1c16;
+                --warn-bg:  #26221a;
+                --zebra:    rgba(163, 178, 140, 0.08);
+                --mark:     #6ea6dd;
+                --led-on:   #e8c840;
+                --shadow:   none;
+            }
+        }
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --board:    #131310;
+            --sheet:    #1c1c16;
+            --ink:      #e2d9c1;
+            --ink-soft: #9b937c;
+            --rule:     #3c3b2f;
+            --bar-bg:   #2f3428;
+            --bar-ink:  #e7dec4;
+            --bar-dim:  #9aa287;
+            --accent:   #a3b28c;
+            --alert:    #dd6a58;
+            --alert-ink:#1c1c16;
+            --warn-bg:  #26221a;
+            --zebra:    rgba(163, 178, 140, 0.08);
+            --mark:     #6ea6dd;
+            --led-on:   #e8c840;
+            --shadow:   none;
+        }
+
         * { box-sizing: border-box; }
         body {
-            margin: 0; font-family: Georgia, 'Times New Roman', serif;
-            background: #f4f1ea; color: #1c1a17; line-height: 1.55;
+            margin: 0; background: var(--board); color: var(--ink);
+            font-family: Spectral, Georgia, 'Times New Roman', serif;
+            font-size: 16px; line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
-        header {
-            background: #1c1a17; color: #f4f1ea; padding: 28px 20px; text-align: center;
-            border-bottom: 6px solid #b23b3b;
+        .cond {
+            font-family: Oswald, 'Arial Narrow', 'Helvetica Neue', Impact, sans-serif;
         }
-        header h1 { margin: 0; font-size: 2rem; letter-spacing: 0.14em; }
-        header p { margin: 6px 0 0; color: #c9c3b6; font-size: 0.95rem; letter-spacing: 0.05em; }
-        main { max-width: 820px; margin: 0 auto; padding: 24px 20px 80px; }
+        .mono, code, .k {
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+        }
+
+        /* ---- masthead ---- */
+        .mast {
+            position: sticky; top: 0; z-index: 10;
+            background: var(--bar-bg); color: var(--bar-ink);
+            border-bottom: 1px solid var(--rule);
+        }
+        .mast-in {
+            max-width: 900px; margin: 0 auto; padding: 9px 30px;
+            display: flex; align-items: center; justify-content: space-between; gap: 14px;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase;
+        }
+        .mast-in .desig { color: var(--bar-ink); }
+        .mast-in .rev { color: var(--bar-dim); }
+        #theme {
+            appearance: none; cursor: pointer;
+            background: transparent; color: var(--bar-ink);
+            border: 1px solid var(--bar-dim); padding: 5px 11px;
+            display: inline-flex; align-items: center; gap: 8px;
+            font: inherit; letter-spacing: 0.16em; text-transform: uppercase;
+        }
+        #theme:hover { border-color: var(--bar-ink); }
+        #theme:focus-visible { outline: 2px solid var(--bar-ink); outline-offset: 2px; }
+        #theme .lamp {
+            width: 9px; height: 9px; border-radius: 50%;
+            border: 1px solid var(--bar-ink); background: var(--led-on);
+        }
+        :root[data-theme="dark"] #theme .lamp { background: transparent; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) #theme .lamp { background: transparent; }
+        }
+
+        /* ---- the sheet ---- */
+        main {
+            --pad: 30px; --gutter: 74px;
+            max-width: 900px; margin: 0 auto 60px; background: var(--sheet);
+            padding: 0 var(--pad) 4px; box-shadow: var(--shadow);
+            counter-reset: sec;
+        }
+
+        /* ---- cover block ---- */
+        .cover {
+            padding: 40px 0 30px; border-bottom: 5px solid var(--ink);
+        }
+        .cover .kicker {
+            margin: 0 0 12px; font-family: Oswald, 'Arial Narrow', sans-serif;
+            font-size: 0.78rem; letter-spacing: 0.44em; text-transform: uppercase;
+            color: var(--accent);
+        }
+        .cover h1 {
+            margin: 0; font-family: Oswald, 'Arial Narrow', Impact, sans-serif;
+            font-weight: 700; font-size: clamp(2.5rem, 8vw, 3.9rem);
+            letter-spacing: 0.3em; line-height: 0.98; text-indent: 0.3em;
+            text-wrap: balance;
+        }
+        .cover .sub {
+            margin: 14px 0 0; font-family: Oswald, 'Arial Narrow', sans-serif;
+            font-weight: 400; font-size: 0.95rem; letter-spacing: 0.14em;
+            text-transform: uppercase; color: var(--ink-soft);
+        }
+        .cover .stampline {
+            margin-top: 22px; display: inline-block; padding: 8px 13px;
+            border: 2px solid var(--alert); color: var(--alert);
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase;
+        }
+
+        /* ---- contents ---- */
+        nav.toc { padding: 26px 0 8px; }
+        nav.toc h2 {
+            margin: 0 0 14px; font-family: Oswald, 'Arial Narrow', sans-serif;
+            font-weight: 500; font-size: 0.86rem; letter-spacing: 0.28em;
+            text-transform: uppercase; padding-bottom: 7px;
+            border-bottom: 1px solid var(--rule);
+        }
+        nav.toc ol {
+            margin: 0; padding: 0; list-style: none; counter-reset: toc;
+            columns: 2; column-gap: 40px;
+        }
+        nav.toc li {
+            counter-increment: toc; break-inside: avoid;
+            display: flex; gap: 12px; padding: 3px 0;
+        }
+        nav.toc li::before {
+            content: counter(toc) "."; flex: none; width: 2.1em; text-align: right;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.78rem; color: var(--accent); padding-top: 0.18em;
+        }
+        nav.toc a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+        nav.toc a:hover { border-bottom-color: var(--ink); }
+        nav.toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+        /* ---- sections: reversed bar + hanging paragraph numbers ---- */
         section {
-            background: #fffdf8; border: 1px solid #d8d2c4; border-radius: 6px;
-            padding: 22px 26px; margin: 22px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            counter-increment: sec; counter-reset: para;
+            padding: 0 0 12px var(--gutter);
         }
-        h2 {
-            margin-top: 0; font-size: 1.5rem; border-bottom: 2px solid #1c1a17;
-            padding-bottom: 8px; letter-spacing: 0.06em;
+        section > h2 {
+            margin: 34px calc(var(--pad) * -1) 20px calc((var(--gutter) + var(--pad)) * -1);
+            padding: 8px var(--pad);
+            background: var(--bar-bg); color: var(--bar-ink);
+            font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 600;
+            font-size: 1.02rem; letter-spacing: 0.16em; text-transform: uppercase;
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px;
         }
-        h3 { font-size: 1.05rem; letter-spacing: 0.04em; margin-bottom: 6px; }
-        p.lead { font-style: italic; color: #55504a; }
-        ol.rules { padding-left: 22px; }
-        ol.rules li { margin: 8px 0; }
+        section > h2::before {
+            content: "Section " counter(sec);
+            flex: none; font-weight: 400; font-size: 0.72rem; letter-spacing: 0.28em;
+            color: var(--bar-dim);
+        }
+        section > h3 {
+            position: relative; margin: 24px 0 6px;
+            font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 500;
+            font-size: 0.88rem; letter-spacing: 0.15em; text-transform: uppercase;
+        }
+        section > h3::before {
+            counter-increment: para; content: counter(sec) "-" counter(para) ".";
+            position: absolute; left: calc(var(--gutter) * -1); width: calc(var(--gutter) - 14px);
+            text-align: right; color: var(--accent);
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-weight: 700; font-size: 0.78rem; letter-spacing: 0.02em; top: 0.1em;
+        }
+        p { margin: 0 0 10px; max-width: 66ch; }
+        p.lead {
+            font-style: italic; color: var(--ink-soft); font-size: 1.02rem;
+        }
+        strong { font-weight: 600; }
+
+        /* ---- warning / note boxes ---- */
         .note {
-            background: #f3ecd8; border-left: 4px solid #b23b3b; padding: 10px 14px;
-            margin: 16px 0; font-size: 0.95rem;
+            border: 3px double var(--alert); background: var(--warn-bg);
+            margin: 16px 0; padding: 0 16px 13px; font-size: 0.95rem;
         }
-        code, .k { font-family: 'Courier New', monospace; font-weight: bold; }
-        table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.95rem; }
-        th, td { border: 1px solid #d8d2c4; padding: 8px 10px; text-align: left; }
-        th { background: #efe9db; }
-        .swatch { display: inline-block; width: 14px; height: 14px; border: 1px solid #1c1a17;
-            vertical-align: middle; margin-right: 4px; border-radius: 2px; }
+        .note::before {
+            content: "Note"; display: block; margin: 0 -16px 11px; padding: 3px;
+            text-align: center; background: var(--alert); color: var(--alert-ink);
+            font-family: Oswald, 'Arial Narrow', sans-serif;
+            font-size: 0.74rem; letter-spacing: 0.5em; text-indent: 0.5em;
+            text-transform: uppercase;
+        }
+        .note.warn::before { content: "Warning"; }
+        .note > :last-child { margin-bottom: 0; }
+
+        /* ---- rule lists ---- */
+        ol.rules { margin: 8px 0 0; padding-left: 0; list-style: none; counter-reset: r; }
+        ol.rules li {
+            counter-increment: r; position: relative; padding-left: 38px;
+            margin: 7px 0; max-width: 64ch;
+        }
+        ol.rules li::before {
+            content: "(" counter(r, lower-alpha) ")"; position: absolute; left: 0; top: 0;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.78rem; color: var(--accent);
+        }
+
+        /* ---- tables ---- */
+        table {
+            border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.93rem;
+            font-variant-numeric: tabular-nums;
+        }
+        th, td { border: 1px solid var(--rule); padding: 7px 10px; text-align: left; }
+        th {
+            background: var(--bar-bg); color: var(--bar-ink); border-color: var(--bar-bg);
+            font-family: Oswald, 'Arial Narrow', sans-serif; font-weight: 500;
+            font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase;
+        }
+        tr:nth-child(even) td { background: var(--zebra); }
+        code, .k { font-weight: 700; font-size: 0.88em; letter-spacing: 0.03em; }
+
+        /* ---- module graphics ---- */
+        .swatch {
+            display: inline-block; width: 12px; height: 12px; margin-right: 5px;
+            vertical-align: -1px; border: 1px solid var(--ink);
+        }
         .red { background: #d44040; } .blue { background: #4870dc; }
-        .yellow { background: #e8d048; } .white { background: #ececf0; } .black { background: #222228; }
-        nav.toc { background: #fffdf8; border: 1px solid #d8d2c4; border-radius: 6px;
-            padding: 18px 26px; margin: 22px 0; }
-        nav.toc h2 { font-size: 1.1rem; border: 0; padding: 0; margin-bottom: 8px; }
-        nav.toc ol { margin: 0; padding-left: 22px; columns: 2; }
-        nav.toc a { color: inherit; }
-        .sym { font-family: 'Courier New', monospace; font-weight: bold;
-            font-size: 1.35rem; letter-spacing: 0.18em; }
+        .yellow { background: #e8d048; } .white { background: #ececf0; }
+        .black { background: #222228; } .green { background: #3f8f52; }
+        .sym {
+            font-family: 'Roboto Mono', 'Courier New', monospace; font-weight: 700;
+            font-size: 1.35rem; letter-spacing: 0.18em;
+        }
         table.cols td.sym { text-align: center; letter-spacing: 0; padding: 6px 4px; }
-        .wordlist { font-family: 'Courier New', monospace; columns: 5; margin: 12px 0;
-            font-size: 0.95rem; }
+        .wordlist {
+            font-family: 'Roboto Mono', 'Courier New', monospace; columns: 5;
+            margin: 14px 0; font-size: 0.92rem; letter-spacing: 0.04em;
+        }
         .ledgrid { line-height: 1.1; }
-        .led { display: inline-block; width: 13px; height: 13px; border-radius: 50%;
-            border: 1px solid #1c1a17; margin: 1px; }
-        .led.on { background: #e8c840; }
+        .led {
+            display: inline-block; width: 13px; height: 13px; border-radius: 50%;
+            border: 1px solid var(--ink); margin: 1px;
+        }
+        .led.on { background: var(--led-on); }
         .led.off { background: transparent; }
         .mazes { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; }
         .mazes figure { margin: 0; text-align: center; }
-        .mazes figcaption { font-size: 0.85rem; letter-spacing: 0.06em; margin-bottom: 4px; }
-        .mazes svg line { stroke: #1c1a17; stroke-width: 3; stroke-linecap: square; }
-        .mazes svg .mk { fill: #2f7fd0; }
-        footer { text-align: center; color: #8a857c; font-size: 0.85rem; padding: 20px; }
-        @media (prefers-color-scheme: dark) {
-            body { background: #17161a; color: #e6e3dc; }
-            section { background: #201f24; border-color: #35333a; box-shadow: none; }
-            h2 { border-color: #e6e3dc; }
-            th { background: #2a2930; } th, td { border-color: #35333a; }
-            p.lead { color: #a39f97; }
-            .note { background: #262027; }
-            nav.toc { background: #201f24; border-color: #35333a; }
-            .mazes svg line { stroke: #e6e3dc; }
-            header { background: #0e0d10; }
+        .mazes figcaption {
+            font-family: Oswald, 'Arial Narrow', sans-serif; font-size: 0.74rem;
+            letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 5px;
         }
+        .mazes svg line { stroke: var(--ink); stroke-width: 3; stroke-linecap: square; }
+        .mazes svg .mk { fill: var(--mark); }
+
+        /* ---- foot of sheet ---- */
+        footer {
+            border-top: 2px solid var(--ink); margin-top: 30px; padding: 9px 0 22px;
+            display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
+            color: var(--accent);
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase;
+        }
+
+        /* ---- narrow screens: numbers move above their heading ---- */
+        @media (max-width: 700px) {
+            main { --pad: 18px; --gutter: 0px; }
+            section > h3 { padding-top: 1.2em; }
+            section > h3::before {
+                position: absolute; left: 0; top: 0; width: auto; text-align: left;
+            }
+            nav.toc ol { columns: 1; }
+            .wordlist { columns: 3; }
+        }
+
+        /* ---- printed copy ---- */
+        @media print {
+            body { background: #fff; color: #000; }
+            .mast { display: none; }
+            main {
+                max-width: none; box-shadow: none; background: #fff;
+                --gutter: 62px;
+            }
+            section { break-inside: auto; }
+            section > h2 { break-after: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            table, .note, .mazes figure { break-inside: avoid; }
+            th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
 <body>
-    <header>
-        <h1>P A N I C</h1>
-        <p>Puzzles Always Need Immediate Communication &mdash; Defuser's Manual</p>
-    </header>
+    <div class="mast">
+        <div class="mast-in">
+            <span class="desig">TM 9&#8209;1385&#8209;PANIC</span>
+            <span class="rev">Expert copy</span>
+            <button id="theme" type="button" aria-pressed="false">
+                <span class="lamp" aria-hidden="true"></span><span class="lbl">Night issue</span>
+            </button>
+        </div>
+    </div>
 
     <main>
+        <div class="cover">
+            <p class="kicker">Technical Manual</p>
+            <h1>PANIC</h1>
+            <p class="sub">Puzzles Always Need Immediate Communication &mdash; Defuser's Field Manual</p>
+            <div class="stampline">Expert copy &middot; the defuser must not read this document</div>
+        </div>
+
         <nav class="toc">
-            <h2>Modules</h2>
+            <h2>Contents</h2>
             <ol>
+                <li><a href="#before">Before You Begin</a></li>
                 <li><a href="#widgets">Bomb-Wide Information</a></li>
                 <li><a href="#wires">Wires</a></li>
                 <li><a href="#button">The Button</a></li>
@@ -104,7 +371,7 @@
             </ol>
         </nav>
 
-        <section>
+        <section id="before">
             <h2>Before You Begin</h2>
             <p class="lead">The Expert has the manual. The Defuser has the bomb. Only the Defuser
             may touch it; only the Expert may read this. Talk to each other.</p>
@@ -142,7 +409,7 @@
                 <span class="swatch black"></span>Black
             </p>
 
-            <div class="note">Count the wires <strong>first</strong>, then follow the matching list.
+            <div class="note warn">Count the wires <strong>first</strong>, then follow the matching list.
             "Last wire" means the one nearest the bottom. Wire order is counted top to bottom.</div>
 
             <h3>3 wires</h3>
@@ -184,7 +451,7 @@
             <p class="lead">One big coloured button with a word on it. Ask the Defuser for both the
             <strong>colour of the button</strong> and the <strong>word on it</strong>.</p>
 
-            <div class="note">Work down the list and stop at the <strong>first</strong> rule that
+            <div class="note warn">Work down the list and stop at the <strong>first</strong> rule that
             applies. Ignore every rule below it.</div>
 
             <ol class="rules">
@@ -471,7 +738,7 @@
             <p class="lead">Four panels of up to three wires, shown one panel at a time. Each wire
             runs to terminal A, B or C.</p>
 
-            <div class="note">Keep a <strong>running count of each colour</strong> across the whole
+            <div class="note warn">Keep a <strong>running count of each colour</strong> across the whole
             module, not just the current panel &mdash; the third red wire you have seen is
             occurrence 3 even if it is the first one on this panel. Cut a wire only if its terminal
             appears in that occurrence's row. Press the down arrow to move on; doing that with an
@@ -525,7 +792,7 @@
             <p class="lead">A 6&times;6 grid with invisible walls. Two circles mark which maze is in
             play; the white square is the defuser, the red triangle is the goal.</p>
 
-            <div class="note">Ask where the <strong>two circles</strong> are and find the matching
+            <div class="note warn">Ask where the <strong>two circles</strong> are and find the matching
             maze below &mdash; no two mazes share the same pair. Then read out moves one at a time.
             Walking into a wall is a strike, so check every step before calling it.</div>
 
@@ -602,7 +869,37 @@
             </table>
         </section>
 
-        <footer>PANIC &mdash; a Keep Talking and Nobody Explodes tribute. Manual revision 0.1.</footer>
+        <footer>
+            <span>TM 9&#8209;1385&#8209;PANIC</span>
+            <span>A Keep Talking and Nobody Explodes tribute</span>
+            <span>Revision 0.1</span>
+        </footer>
     </main>
+
+    <script>
+        (function () {
+            var btn = document.getElementById("theme");
+            var root = document.documentElement;
+            var media = window.matchMedia("(prefers-color-scheme: dark)");
+
+            function isDark() {
+                var set = root.getAttribute("data-theme");
+                return set ? set === "dark" : media.matches;
+            }
+            function paint() {
+                var dark = isDark();
+                btn.setAttribute("aria-pressed", dark ? "true" : "false");
+                btn.querySelector(".lbl").textContent = dark ? "Day issue" : "Night issue";
+            }
+            btn.addEventListener("click", function () {
+                var next = isDark() ? "light" : "dark";
+                root.setAttribute("data-theme", next);
+                try { localStorage.setItem("panic-manual-theme", next); } catch (e) {}
+                paint();
+            });
+            media.addEventListener("change", paint);
+            paint();
+        })();
+    </script>
 </body>
 </html>
