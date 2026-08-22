@@ -94,6 +94,144 @@ Button's release digit, the needy wake-up timers) have to behave as they do in a
 it wraps back to full instead of running out. Strikes are counted and shown, but never detonate,
 and solving the module leaves the round running so it can be poked further.
 
+## Adding Your Own Module
+
+A module is a `Puzzle` subclass plus a manual section. Nothing else on the bomb needs to know it
+exists: the bomb hands it the bomb-wide attributes, gives it a square canvas to draw into, and
+feeds it taps already converted into that canvas's pixels, so a module never deals with 3D.
+
+### 1. Write the puzzle
+
+Modules live in `include/puzzles/` and `src/puzzles/`, one `snake_case` pair per module. Say the
+module is called *Toggles*:
+
+```cpp
+// include/puzzles/toggles_puzzle.h
+#pragma once
+
+#include "puzzle.h"
+
+class TogglesPuzzle : public Puzzle {
+public:
+    const char* name() const override { return "Toggles"; }
+    void init(const BombAttributes& attrs, std::mt19937& rng) override;
+    void update(const ModuleInput& in, const BombContext& ctx,
+                float dt) override;
+    void draw() override;
+
+private:
+    bool on_[4] = {false, false, false, false};
+    int correct_index_ = 0;
+};
+```
+
+```cpp
+// src/puzzles/toggles_puzzle.cpp
+#include "puzzles/toggles_puzzle.h"
+
+#include "raylib.h"
+
+namespace {
+constexpr float cell = module_tex_size / 4.0f;
+}  // namespace
+
+void TogglesPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
+    // Derive the answer from what the Defuser can read out to the Expert...
+    correct_index_ = attrs.serial_last_digit_odd() ? 0 : 3;
+    // ...and take any randomness from the bomb's seeded generator, never from
+    // std::random_device.
+    if (attrs.battery_count > 2) {
+        correct_index_ = std::uniform_int_distribution<int>(0, 3)(rng);
+    }
+}
+
+void TogglesPuzzle::update(const ModuleInput& in, const BombContext& ctx,
+                           float dt) {
+    (void)ctx;   // live strikes / time left, if the module needs them
+    (void)dt;
+    if (is_solved() || !in.tapped) return;
+
+    const int idx = static_cast<int>(in.tap_pos.x / cell);
+    if (idx < 0 || idx > 3) return;
+
+    on_[idx] = !on_[idx];
+    if (idx == correct_index_) {
+        mark_solved();
+    } else {
+        raise_strike();
+    }
+}
+
+void TogglesPuzzle::draw() {
+    for (int i = 0; i < 4; ++i) {
+        DrawRectangle(static_cast<int>(i * cell), 180,
+                      static_cast<int>(cell) - 8, 150,
+                      on_[i] ? Color{220, 190, 60, 255} : Color{60, 62, 70, 255});
+    }
+}
+```
+
+The three overrides:
+
+| Override | Contract |
+| --- | --- |
+| `init(attrs, rng)` | Pick the module's variables once, when the bomb is built. `attrs` is the serial, battery count, indicators, and ports (see `include/bomb_attributes.h`, which also has the derived queries the modules lean on, such as `serial_last_digit_odd()` and `has_lit_indicator("FRK")`). |
+| `update(in, ctx, dt)` | Runs every frame, even when the module is not focused. `in` only carries pointer events while it *is* focused: `tapped`/`tap_pos` for a click on the spot, and `pressed`/`held`/`released` for press-and-hold interactions. `ctx` carries the live strike count and time left. Call `mark_solved()` on success and `raise_strike()` on a mistake. |
+| `draw()` | 2D raylib calls into a `module_tex_size` (512px) square, origin top-left, y down. The bomb renders this into the module's own texture and maps it onto the bay; taps arrive in the same pixel space, so drawing and hit-testing use identical coordinates. |
+
+### 2. Register it in three places
+
+```cpp
+// src/bomb.cpp -- include the header, then in register_builtin_puzzles():
+reg.add("Toggles", [] { return std::unique_ptr<Puzzle>(new TogglesPuzzle()); });
+
+// src/bomb.cpp -- and add the same name to the module_templates list, which is
+// the pool bombs are drawn from (and the debug picker's menu). Remember to bump
+// the std::array size.
+constexpr std::array<const char*, 15> module_templates = { ..., "Toggles" };
+```
+
+```cmake
+# CMakeLists.txt -- add the source to the panic_game target
+src/puzzles/toggles_puzzle.cpp
+```
+
+The registry is filled explicitly rather than by static initializers, so that the static library
+never drops a puzzle translation unit; a module that is registered but missing from
+`module_templates` will never appear on a bomb.
+
+### 3. Write the manual section
+
+Add a `<section>` to `manual/index.html` and a matching entry to its table of contents. **The
+in-game logic and the manual must agree** — the manual is the only thing the Expert has, and a
+rule that does not match the code is an unsolvable module. Keep the rules decidable from what the
+Defuser can actually see and read aloud.
+
+### 4. Keep it deterministic
+
+A serial number and difficulty must always rebuild exactly the same bomb, so:
+
+- Take all randomness from the `rng` handed to `init()`. Never use `std::random_device`, and never
+  use an unseeded engine.
+- If the module needs randomness *during play* (dealing a later stage, picking a wake-up time),
+  keep a `std::mt19937` member seeded from that `rng` in `init()` — not a function-local `static`.
+- Read the clock and strike count from the `BombContext` passed to `update()`, not from globals.
+
+### 5. Needy modules (optional)
+
+A needy module is never disarmed; it wakes up periodically and demands attention for the whole
+round. Subclass `NeedyPuzzle` instead of `Puzzle`, call `reset_needy(rng)` from `init()` and
+`tick_needy(dt)` from `update()`, override `on_activate()` to deal a fresh demand, and call
+`satisfy()` once it has been met. `on_expire()` defaults to a strike. Bombs cap needy modules at
+one and place none below difficulty 3, so at least five bays stay solvable.
+
+### 6. Try it
+
+Build, then use the **DEBUG** button on the title screen to play the new module alone on an
+otherwise empty bomb, checking a few serials against what the manual says the Expert should be
+telling the Defuser to do.
+
+
 ## Native Build
 
 Requirements: CMake 3.16+, a C++17 compiler, and Git. raylib 6.0 is fetched automatically by
