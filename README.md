@@ -1,5 +1,7 @@
 # PANIC - Puzzles Always Need Immediate Communication
 
+![PANIC](doc/banner.png)
+
 PANIC is a small 3D bomb-defusal game inspired by *Keep Talking and Nobody Explodes*. One player
 (the **Defuser**) sees the bomb but has no instructions; their teammate (the
 **Expert**) has access to the [manual](https://chiaxr.github.io/PANIC/manual.html) but cannot see the bomb. They have to communicate with each other to disarm the bomb before the timer runs out.
