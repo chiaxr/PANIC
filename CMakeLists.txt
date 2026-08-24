@@ -109,4 +109,10 @@ if(PANIC_BUILD_WEB)
         COMMAND ${CMAKE_COMMAND} -E copy
             "${CMAKE_CURRENT_SOURCE_DIR}/manual/index.html"
             "${CMAKE_BINARY_DIR}/dist/manual.html")
+
+    # Social/link-preview card referenced by the og:image tags in both pages.
+    add_custom_command(TARGET panic_web POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/doc/og-image.png"
+            "${CMAKE_BINARY_DIR}/dist/og-image.png")
 endif()
