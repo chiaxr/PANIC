@@ -26,11 +26,11 @@ const char* const morse[26] = {
 };
 
 // Timing, in dot units per second.
-constexpr float dots_per_second = 4.0f;
+constexpr float dots_per_second = 3.0f;
 constexpr float dot_units = 1.0f;
 constexpr float dash_units = 3.0f;
-constexpr float symbol_gap_units = 1.0f;
-constexpr float letter_gap_units = 3.0f;
+constexpr float symbol_gap_units = 2.0f;
+constexpr float letter_gap_units = 5.0f;
 constexpr float word_gap_units = 7.0f;
 
 // Module-local layout.
