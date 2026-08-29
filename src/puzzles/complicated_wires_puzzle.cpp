@@ -8,8 +8,10 @@
 
 namespace {
 
-// What the table tells you to do with a wire.
-enum class Instruction { CUT, DONT, SERIAL, PARALLEL, BATTERY };
+// What the table tells you to do with a wire. Every condition here has to be
+// answerable from the casing, so each one reads a widget the bomb actually
+// prints: the serial, the batteries, or the indicators.
+enum class Instruction { CUT, DONT, SERIAL, VOWEL, FRK, BATTERY };
 
 // PANIC's own table, indexed by red | blue<<1 | star<<2 | led<<3.
 // manual/index.html prints the same sixteen rows.
@@ -18,12 +20,12 @@ constexpr Instruction wire_table[16] = {
     Instruction::CUT,        // red 1  blue 0  star 0  led 0
     Instruction::BATTERY,    // red 0  blue 1  star 0  led 0
     Instruction::DONT,       // red 1  blue 1  star 0  led 0
-    Instruction::PARALLEL,   // red 0  blue 0  star 1  led 0
+    Instruction::FRK,        // red 0  blue 0  star 1  led 0
     Instruction::SERIAL,     // red 1  blue 0  star 1  led 0
     Instruction::DONT,       // red 0  blue 1  star 1  led 0
     Instruction::CUT,        // red 1  blue 1  star 1  led 0
     Instruction::CUT,        // red 0  blue 0  star 0  led 1
-    Instruction::PARALLEL,   // red 1  blue 0  star 0  led 1
+    Instruction::VOWEL,      // red 1  blue 0  star 0  led 1
     Instruction::CUT,        // red 0  blue 1  star 0  led 1
     Instruction::SERIAL,     // red 1  blue 1  star 0  led 1
     Instruction::BATTERY,    // red 0  blue 0  star 1  led 1
@@ -72,9 +74,10 @@ bool resolve(Instruction instr, const BombAttributes& attrs) {
             const int d = attrs.serial_last_digit();
             return d >= 0 && d % 2 == 0;
         }
-        case Instruction::PARALLEL:
-            return std::find(attrs.ports.begin(), attrs.ports.end(),
-                             PortType::PARALLEL) != attrs.ports.end();
+        case Instruction::VOWEL:
+            return attrs.serial_has_vowel();
+        case Instruction::FRK:
+            return attrs.has_lit_indicator("FRK");
         case Instruction::BATTERY:
             return attrs.battery_count >= 2;
     }

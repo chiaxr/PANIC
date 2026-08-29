@@ -15,14 +15,11 @@ struct Indicator {
     bool lit = false;
 };
 
-enum class PortType { SERIAL, PARALLEL, DVI, RJ45, PS2, RCA };
-
 struct BombAttributes {
     BombColor color = BombColor::BOMB_BLACK;
     std::string serial = "AB1C2";
     int battery_count = 0;
     std::vector<Indicator> indicators;
-    std::vector<PortType> ports;
 
     // ---- Derived queries used by puzzle logic and the defuser manual ----
 
@@ -105,14 +102,6 @@ struct BombAttributes {
         static const char* indicator_labels[] = {"CAR", "FRK", "SND", "CLR", "BOB"};
         for (const char* label : indicator_labels) {
             if (coin(rng)) attrs.indicators.push_back({label, coin(rng) != 0});
-        }
-
-        // Ports.
-        static const PortType port_pool[] = {
-                PortType::SERIAL, PortType::PARALLEL, PortType::DVI,
-                PortType::RJ45, PortType::PS2, PortType::RCA};
-        for (PortType p : port_pool) {
-            if (coin(rng)) attrs.ports.push_back(p);
         }
 
         return attrs;

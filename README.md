@@ -179,7 +179,7 @@ The three overrides:
 
 | Override | Contract |
 | --- | --- |
-| `init(attrs, rng)` | Pick the module's variables once, when the bomb is built. `attrs` is the serial, battery count, indicators, and ports (see `include/bomb_attributes.h`, which also has the derived queries the modules lean on, such as `serial_last_digit_odd()` and `has_lit_indicator("FRK")`). |
+| `init(attrs, rng)` | Pick the module's variables once, when the bomb is built. `attrs` is the serial, battery count, and indicators (see `include/bomb_attributes.h`, which also has the derived queries the modules lean on, such as `serial_last_digit_odd()` and `has_lit_indicator("FRK")`). |
 | `update(in, ctx, dt)` | Runs every frame, even when the module is not focused. `in` only carries pointer events while it *is* focused: `tapped`/`tap_pos` for a click on the spot, and `pressed`/`held`/`released` for press-and-hold interactions. `ctx` carries the live strike count and time left. Call `mark_solved()` on success and `raise_strike()` on a mistake. |
 | `draw()` | 2D raylib calls into a `module_tex_size` (512px) square, origin top-left, y down. The bomb renders this into the module's own texture and maps it onto the bay; taps arrive in the same pixel space, so drawing and hit-testing use identical coordinates. |
 
