@@ -21,9 +21,19 @@ constexpr float drag_threshold = 8.0f;  // px of motion before a press is a drag
 constexpr float pitch_limit = PI * 0.5f - 0.05f;
 constexpr float menu_spin_speed = 0.25f;  // radians per second on the menu
 
-// Free-look camera, and the module-focus move that swings away from it.
-constexpr Vector3 camera_free_pos{0.0f, 0.0f, 8.0f};
+// Free-look camera, and the module-focus move that swings away from it. The
+// free camera sits straight back along +Z at the current zoom distance, always
+// aimed at the bomb's centre: zooming walks it along that one axis, so the bomb
+// grows about its own middle rather than about wherever the pointer happens to
+// be.
 constexpr Vector3 camera_free_target{0.0f, 0.0f, 0.0f};
+Vector3 free_camera_pos(float dist) { return Vector3{0.0f, 0.0f, dist}; }
+
+// Zoom feel. The wheel is exponential so a notch means the same proportional
+// step at either end of the range, and the pinch ratio is clamped in case a
+// finger is lost and found again between frames.
+constexpr float zoom_wheel_step = 0.88f;
+constexpr float zoom_pinch_limit = 2.0f;
 constexpr float focus_time = 0.32f;         // seconds for the focus move
 constexpr float round_yaw = 0.5f;           // pose a round starts in
 constexpr float round_pitch = -0.15f;
@@ -432,7 +442,7 @@ bool rect_hovered(Rectangle rect) {
 void Game::setup() {
     shading_.load();
 
-    camera_.position = camera_free_pos;
+    camera_.position = free_camera_pos(view_dist_);
     camera_.target = camera_free_target;
     camera_.up = Vector3{0.0f, 1.0f, 0.0f};
     camera_.fovy = 45.0f;
@@ -528,6 +538,62 @@ int Game::pick_module(Vector2 screen_pos, Vector2& out_module_pixel) const {
                                    (0.5f - v / q.half_h * 0.5f) * module_tex_size};
     }
     return best;
+}
+
+void Game::update_zoom() {
+    const int touches = GetTouchPointCount();
+
+    // A second finger turns the gesture into a pinch: drop whatever press the
+    // first one had started, so the bomb does not spin (or press a component)
+    // while the fingers move, and keep the pointer suppressed until every
+    // finger has lifted -- otherwise the one left behind resumes as a drag.
+    if (touches >= 2 && !pinching_) {
+        pinching_ = true;
+        pinch_span_ = 0.0f;
+        cancel_pointer();
+    }
+    if (touches == 0) pinching_ = false;
+
+    // A focused module is exempt: that move sizes the bay to the viewport
+    // itself, so zoom would only fight it. The distance is kept, though, and
+    // the camera returns to it on the way back out.
+    if (focused_slot_ >= 0) return;
+
+    float factor = 1.0f;
+
+    const float wheel = GetMouseWheelMove();
+    if (wheel != 0.0f) factor *= std::pow(zoom_wheel_step, wheel);
+
+    if (pinching_ && touches >= 2) {
+        const float span =
+            Vector2Distance(GetTouchPosition(0), GetTouchPosition(1));
+        // Spreading the fingers grows the span, which pulls the camera in.
+        if (pinch_span_ > 1.0f && span > 1.0f) {
+            factor *= Clamp(pinch_span_ / span, 1.0f / zoom_pinch_limit,
+                            zoom_pinch_limit);
+        }
+        pinch_span_ = span;
+    }
+
+    if (factor == 1.0f) return;
+    view_dist_ = Clamp(view_dist_ * factor, view_dist_min, view_dist_max);
+    camera_.position = free_camera_pos(view_dist_);
+}
+
+// Drop a press that is in flight without it counting as a tap. A focused
+// module still has to hear the release, or a press-and-hold module would stay
+// held for ever.
+void Game::cancel_pointer() {
+    if (pointer_down_ && press_slot_ >= 0 && press_slot_ == focused_slot_ &&
+            focus_settled()) {
+        ModuleInput in;
+        in.released = true;
+        in.pointer_pos = press_pixel_;
+        bomb_.send_input(press_slot_, in);
+    }
+    pointer_down_ = false;
+    dragging_ = false;
+    press_slot_ = -1;
 }
 
 void Game::handle_pointer(float dt) {
@@ -669,12 +735,19 @@ void Game::update_focus(float dt) {
         focus_t_ = std::max(target, focus_t_ - dt / focus_time);
     }
 
-    if (focused_slot_ < 0) return;
+    if (focused_slot_ < 0) {
+        // Free look: straight back from the bomb's centre, at the zoom the
+        // player has dialled in.
+        camera_.position = free_camera_pos(view_dist_);
+        camera_.target = camera_free_target;
+        return;
+    }
 
     const float s = smoothstep01(focus_t_);
     yaw_ = Lerp(free_yaw_, focus_yaw_, s);
     pitch_ = Lerp(free_pitch_, focus_pitch_, s);
-    camera_.position = Vector3Lerp(camera_free_pos, focus_cam_pos_, s);
+    camera_.position =
+        Vector3Lerp(free_camera_pos(view_dist_), focus_cam_pos_, s);
     camera_.target = Vector3Lerp(camera_free_target, focus_cam_target_, s);
 
     if (!focusing_ && focus_t_ <= 0.0f) focused_slot_ = -1;
@@ -764,7 +837,7 @@ void Game::start_round() {
     focus_t_ = 0.0f;
     free_yaw_ = yaw_;
     free_pitch_ = pitch_;
-    camera_.position = camera_free_pos;
+    camera_.position = free_camera_pos(view_dist_);
     camera_.target = camera_free_target;
 
     pointer_down_ = false;
@@ -1197,11 +1270,13 @@ void Game::update(float dt) {
                 end_focus();
             }
 
+            update_zoom();
+
             // The debug bar owns the pointer while a press sits on it, and
             // can end the round outright (back to the picker).
             const bool debug_bar_active = debug_mode() && update_debug_controls();
             if (state_ != State::PLAYING) break;
-            if (!debug_bar_active) handle_pointer(dt);
+            if (!debug_bar_active && !pinching_) handle_pointer(dt);
 
             BombContext ctx;
             ctx.strikes = strikes_;
@@ -1393,6 +1468,7 @@ void Game::draw_instructions() const {
 
     header("Controls");
     line("Drag (mouse or one finger) to rotate the bomb.");
+    line("Wheel, or pinch with two fingers, to zoom in and out.");
     line("Click or tap a module to zoom in on it, then click its");
     line("components. Tap away or press Backspace to step back.");
     y += instr_section_gap;

@@ -74,6 +74,7 @@ manual, not any other.
 | Left / Right arrows | Move the difficulty slider (it can also be dragged) |
 | Backspace | Leave Instructions; step back out of a focused module |
 | Drag (mouse / one finger) | Rotate the bomb (free look only) |
+| Mouse wheel / two-finger pinch | Zoom the view in and out (free look only) |
 | Mouse click / Tap on a module | Zoom in on it |
 | Mouse click / Tap on a focused module | Interact with it (e.g. cut a wire) |
 | Right-click / Tap away from the module | Step back out to free look |

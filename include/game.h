@@ -43,6 +43,11 @@ private:
     };
 
     void handle_pointer(float dt);
+    // Mouse wheel and two-finger pinch, both moving the free-look camera
+    // straight in and out along the view axis.
+    void update_zoom();
+    // Abandon a press in flight (a pinch has taken the gesture over).
+    void cancel_pointer();
     void draw_hud() const;
 
     // Module focus: align the bomb so a bay faces the camera and zoom in on it.
@@ -120,8 +125,24 @@ private:
     float yaw_ = 0.5f;
     float pitch_ = -0.15f;
 
+    // Free-look zoom: how far back the camera sits from the bomb's centre. The
+    // camera only ever moves along the view axis, so the bomb zooms about its
+    // own middle. A focused module ignores this (the focus move does its own
+    // framing) but comes back to it on the way out.
+    static constexpr float view_dist_default = 8.0f;
+    // The near limit still frames the whole bomb at any rotation (its
+    // half-diagonal is 2.4 units, against 2.07 of visible half-height here);
+    // getting closer than that is what focusing a bay is for.
+    static constexpr float view_dist_min = 5.0f;
+    static constexpr float view_dist_max = 10.0f;
+    float view_dist_ = view_dist_default;
+
     // Pointer tracking (unified mouse/touch).
     bool pointer_down_ = false;
+    // A two-finger pinch owns the gesture: it locks out rotation and taps
+    // until every finger has lifted.
+    bool pinching_ = false;
+    float pinch_span_ = 0.0f;   // distance between the fingers, last frame
     bool dragging_ = false;
     Vector2 press_pos_{};
     Vector2 last_pos_{};
