@@ -317,6 +317,32 @@
         .mazes svg line { stroke: var(--ink); stroke-width: 3; stroke-linecap: square; }
         .mazes svg .mk { fill: var(--mark); }
 
+        .figs { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin: 14px 0; }
+        .figs figure { margin: 0; text-align: center; }
+        .figs figcaption {
+            font-family: Oswald, 'Arial Narrow', sans-serif; font-size: 0.72rem;
+            letter-spacing: 0.16em; text-transform: uppercase; margin-top: 4px;
+        }
+        .figs svg rect.on { fill: var(--zebra); stroke: var(--ink); stroke-width: 2; }
+        .figs svg rect.off { fill: none; stroke: var(--rule); stroke-width: 1; }
+        .figs svg text {
+            fill: var(--ink-soft); text-anchor: middle;
+            font-family: 'Roboto Mono', 'Courier New', monospace; font-size: 15px;
+        }
+        .figs svg circle.mk { fill: var(--mark); }
+        .figs svg line.pi { stroke: var(--ink); stroke-width: 9; stroke-linecap: round; }
+        .figs svg circle.hub { fill: var(--ink); }
+        .figs svg line.gr { stroke: var(--rule); stroke-width: 1; }
+        .figs svg circle.st { fill: var(--ink); }
+        .figs svg circle.r1 { fill: none; stroke: var(--mark); stroke-width: 2; }
+        .figs svg circle.r2 { fill: none; stroke: var(--mark); stroke-width: 2; stroke-dasharray: 3 3; }
+        .gl { vertical-align: -7px; }
+        .gl line, .gl polyline, .gl circle, .gl path, .gl polygon {
+            stroke: var(--ink); stroke-width: 2.2; fill: none;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .gl .fill { fill: var(--ink); }
+
         /* ---- foot of sheet ---- */
         footer {
             border-top: 2px solid var(--ink); margin-top: 30px; padding: 9px 0 22px;
@@ -347,7 +373,7 @@
             }
             section { break-inside: auto; }
             section > h2 { break-after: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            table, .note, .mazes figure { break-inside: avoid; }
+            table, .note, .mazes figure, .figs figure { break-inside: avoid; }
             th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -388,6 +414,10 @@
                 <li><a href="#complicated-wires">Complicated Wires</a></li>
                 <li><a href="#wire-sequences">Wire Sequences</a></li>
                 <li><a href="#mazes">Mazes</a></li>
+                <li><a href="#fold-out">Fold-Out</a></li>
+                <li><a href="#tape-reader">Tape Reader</a></li>
+                <li><a href="#pipeworks">Pipeworks</a></li>
+                <li><a href="#star-chart">Star Chart</a></li>
                 <li><a href="#venting-gas">Venting Gas (needy)</a></li>
                 <li><a href="#capacitor">Capacitor Discharge (needy)</a></li>
                 <li><a href="#knobs">Knobs (needy)</a></li>
@@ -826,6 +856,202 @@
                 <figure><figcaption>Maze 4</figcaption><svg viewBox="0 0 192 192" width="190" height="190" role="img" aria-label="Maze 4"><rect x="0" y="0" width="192" height="192" fill="none"/><line x1="6" y1="6" x2="36" y2="6"/><line x1="6" y1="36" x2="36" y2="36"/><line x1="6" y1="6" x2="6" y2="36"/><line x1="36" y1="6" x2="66" y2="6"/><line x1="36" y1="36" x2="66" y2="36"/><line x1="66" y1="6" x2="96" y2="6"/><line x1="96" y1="6" x2="96" y2="36"/><line x1="96" y1="6" x2="126" y2="6"/><line x1="96" y1="6" x2="96" y2="36"/><line x1="126" y1="6" x2="156" y2="6"/><line x1="126" y1="36" x2="156" y2="36"/><line x1="156" y1="6" x2="186" y2="6"/><line x1="186" y1="6" x2="186" y2="36"/><line x1="6" y1="36" x2="36" y2="36"/><line x1="6" y1="36" x2="6" y2="66"/><line x1="36" y1="36" x2="66" y2="36"/><line x1="36" y1="66" x2="66" y2="66"/><line x1="96" y1="36" x2="96" y2="66"/><line x1="66" y1="66" x2="96" y2="66"/><line x1="126" y1="36" x2="126" y2="66"/><line x1="96" y1="36" x2="96" y2="66"/><line x1="126" y1="36" x2="156" y2="36"/><line x1="156" y1="36" x2="156" y2="66"/><line x1="126" y1="36" x2="126" y2="66"/><line x1="186" y1="36" x2="186" y2="66"/><line x1="156" y1="36" x2="156" y2="66"/><line x1="6" y1="96" x2="36" y2="96"/><line x1="6" y1="66" x2="6" y2="96"/><line x1="36" y1="66" x2="66" y2="66"/><line x1="66" y1="66" x2="66" y2="96"/><line x1="66" y1="66" x2="96" y2="66"/><line x1="66" y1="66" x2="66" y2="96"/><line x1="126" y1="66" x2="126" y2="96"/><line x1="96" y1="96" x2="126" y2="96"/><line x1="126" y1="66" x2="126" y2="96"/><line x1="186" y1="66" x2="186" y2="96"/><line x1="156" y1="96" x2="186" y2="96"/><line x1="6" y1="96" x2="36" y2="96"/><line x1="36" y1="96" x2="36" y2="126"/><line x1="6" y1="96" x2="6" y2="126"/><line x1="66" y1="96" x2="66" y2="126"/><line x1="36" y1="96" x2="36" y2="126"/><line x1="66" y1="96" x2="66" y2="126"/><line x1="96" y1="96" x2="126" y2="96"/><line x1="126" y1="96" x2="126" y2="126"/><line x1="156" y1="96" x2="156" y2="126"/><line x1="126" y1="96" x2="126" y2="126"/><line x1="156" y1="96" x2="186" y2="96"/><line x1="186" y1="96" x2="186" y2="126"/><line x1="156" y1="96" x2="156" y2="126"/><line x1="6" y1="126" x2="6" y2="156"/><line x1="66" y1="126" x2="66" y2="156"/><line x1="96" y1="126" x2="96" y2="156"/><line x1="66" y1="156" x2="96" y2="156"/><line x1="66" y1="126" x2="66" y2="156"/><line x1="96" y1="126" x2="96" y2="156"/><line x1="156" y1="126" x2="156" y2="156"/><line x1="186" y1="126" x2="186" y2="156"/><line x1="156" y1="126" x2="156" y2="156"/><line x1="6" y1="186" x2="36" y2="186"/><line x1="6" y1="156" x2="6" y2="186"/><line x1="36" y1="186" x2="66" y2="186"/><line x1="66" y1="156" x2="96" y2="156"/><line x1="66" y1="186" x2="96" y2="186"/><line x1="126" y1="156" x2="126" y2="186"/><line x1="96" y1="186" x2="126" y2="186"/><line x1="126" y1="186" x2="156" y2="186"/><line x1="126" y1="156" x2="126" y2="186"/><line x1="186" y1="156" x2="186" y2="186"/><line x1="156" y1="186" x2="186" y2="186"/><circle cx="21" cy="51" r="7" class="mk"/><circle cx="111" cy="21" r="7" class="mk"/></svg></figure>
                 <figure><figcaption>Maze 5</figcaption><svg viewBox="0 0 192 192" width="190" height="190" role="img" aria-label="Maze 5"><rect x="0" y="0" width="192" height="192" fill="none"/><line x1="6" y1="6" x2="36" y2="6"/><line x1="6" y1="36" x2="36" y2="36"/><line x1="6" y1="6" x2="6" y2="36"/><line x1="36" y1="6" x2="66" y2="6"/><line x1="66" y1="6" x2="66" y2="36"/><line x1="66" y1="6" x2="96" y2="6"/><line x1="66" y1="36" x2="96" y2="36"/><line x1="66" y1="6" x2="66" y2="36"/><line x1="96" y1="6" x2="126" y2="6"/><line x1="96" y1="36" x2="126" y2="36"/><line x1="126" y1="6" x2="156" y2="6"/><line x1="126" y1="36" x2="156" y2="36"/><line x1="156" y1="6" x2="186" y2="6"/><line x1="186" y1="6" x2="186" y2="36"/><line x1="6" y1="36" x2="36" y2="36"/><line x1="36" y1="36" x2="36" y2="66"/><line x1="6" y1="36" x2="6" y2="66"/><line x1="36" y1="66" x2="66" y2="66"/><line x1="36" y1="36" x2="36" y2="66"/><line x1="66" y1="36" x2="96" y2="36"/><line x1="96" y1="36" x2="96" y2="66"/><line x1="96" y1="36" x2="126" y2="36"/><line x1="96" y1="36" x2="96" y2="66"/><line x1="126" y1="36" x2="156" y2="36"/><line x1="156" y1="36" x2="156" y2="66"/><line x1="186" y1="36" x2="186" y2="66"/><line x1="156" y1="36" x2="156" y2="66"/><line x1="6" y1="66" x2="6" y2="96"/><line x1="36" y1="66" x2="66" y2="66"/><line x1="66" y1="66" x2="66" y2="96"/><line x1="36" y1="96" x2="66" y2="96"/><line x1="96" y1="66" x2="96" y2="96"/><line x1="66" y1="66" x2="66" y2="96"/><line x1="126" y1="66" x2="126" y2="96"/><line x1="96" y1="66" x2="96" y2="96"/><line x1="156" y1="66" x2="156" y2="96"/><line x1="126" y1="66" x2="126" y2="96"/><line x1="186" y1="66" x2="186" y2="96"/><line x1="156" y1="66" x2="156" y2="96"/><line x1="6" y1="126" x2="36" y2="126"/><line x1="6" y1="96" x2="6" y2="126"/><line x1="36" y1="96" x2="66" y2="96"/><line x1="66" y1="96" x2="66" y2="126"/><line x1="96" y1="96" x2="96" y2="126"/><line x1="66" y1="96" x2="66" y2="126"/><line x1="96" y1="96" x2="96" y2="126"/><line x1="186" y1="96" x2="186" y2="126"/><line x1="6" y1="126" x2="36" y2="126"/><line x1="6" y1="126" x2="6" y2="156"/><line x1="66" y1="126" x2="66" y2="156"/><line x1="36" y1="156" x2="66" y2="156"/><line x1="66" y1="156" x2="96" y2="156"/><line x1="66" y1="126" x2="66" y2="156"/><line x1="126" y1="126" x2="126" y2="156"/><line x1="96" y1="156" x2="126" y2="156"/><line x1="156" y1="126" x2="156" y2="156"/><line x1="126" y1="126" x2="126" y2="156"/><line x1="186" y1="126" x2="186" y2="156"/><line x1="156" y1="126" x2="156" y2="156"/><line x1="6" y1="186" x2="36" y2="186"/><line x1="6" y1="156" x2="6" y2="186"/><line x1="36" y1="156" x2="66" y2="156"/><line x1="36" y1="186" x2="66" y2="186"/><line x1="66" y1="156" x2="96" y2="156"/><line x1="66" y1="186" x2="96" y2="186"/><line x1="96" y1="156" x2="126" y2="156"/><line x1="96" y1="186" x2="126" y2="186"/><line x1="126" y1="186" x2="156" y2="186"/><line x1="186" y1="156" x2="186" y2="186"/><line x1="156" y1="186" x2="186" y2="186"/><circle cx="21" cy="111" r="7" class="mk"/><circle cx="21" cy="51" r="7" class="mk"/></svg></figure>
                 <figure><figcaption>Maze 6</figcaption><svg viewBox="0 0 192 192" width="190" height="190" role="img" aria-label="Maze 6"><rect x="0" y="0" width="192" height="192" fill="none"/><line x1="6" y1="6" x2="36" y2="6"/><line x1="36" y1="6" x2="36" y2="36"/><line x1="6" y1="6" x2="6" y2="36"/><line x1="36" y1="6" x2="66" y2="6"/><line x1="36" y1="6" x2="36" y2="36"/><line x1="66" y1="6" x2="96" y2="6"/><line x1="96" y1="6" x2="126" y2="6"/><line x1="126" y1="6" x2="126" y2="36"/><line x1="126" y1="6" x2="156" y2="6"/><line x1="126" y1="6" x2="126" y2="36"/><line x1="156" y1="6" x2="186" y2="6"/><line x1="186" y1="6" x2="186" y2="36"/><line x1="36" y1="36" x2="36" y2="66"/><line x1="6" y1="36" x2="6" y2="66"/><line x1="36" y1="66" x2="66" y2="66"/><line x1="36" y1="36" x2="36" y2="66"/><line x1="96" y1="36" x2="96" y2="66"/><line x1="126" y1="36" x2="126" y2="66"/><line x1="96" y1="36" x2="96" y2="66"/><line x1="126" y1="66" x2="156" y2="66"/><line x1="126" y1="36" x2="126" y2="66"/><line x1="186" y1="36" x2="186" y2="66"/><line x1="6" y1="96" x2="36" y2="96"/><line x1="6" y1="66" x2="6" y2="96"/><line x1="36" y1="66" x2="66" y2="66"/><line x1="36" y1="96" x2="66" y2="96"/><line x1="96" y1="66" x2="96" y2="96"/><line x1="96" y1="96" x2="126" y2="96"/><line x1="96" y1="66" x2="96" y2="96"/><line x1="126" y1="66" x2="156" y2="66"/><line x1="126" y1="96" x2="156" y2="96"/><line x1="186" y1="66" x2="186" y2="96"/><line x1="6" y1="96" x2="36" y2="96"/><line x1="36" y1="96" x2="36" y2="126"/><line x1="6" y1="96" x2="6" y2="126"/><line x1="36" y1="96" x2="66" y2="96"/><line x1="36" y1="96" x2="36" y2="126"/><line x1="96" y1="96" x2="126" y2="96"/><line x1="126" y1="96" x2="126" y2="126"/><line x1="126" y1="96" x2="156" y2="96"/><line x1="126" y1="96" x2="126" y2="126"/><line x1="186" y1="96" x2="186" y2="126"/><line x1="156" y1="126" x2="186" y2="126"/><line x1="36" y1="126" x2="36" y2="156"/><line x1="6" y1="126" x2="6" y2="156"/><line x1="66" y1="126" x2="66" y2="156"/><line x1="36" y1="126" x2="36" y2="156"/><line x1="96" y1="126" x2="96" y2="156"/><line x1="66" y1="126" x2="66" y2="156"/><line x1="126" y1="126" x2="126" y2="156"/><line x1="96" y1="156" x2="126" y2="156"/><line x1="96" y1="126" x2="96" y2="156"/><line x1="156" y1="126" x2="156" y2="156"/><line x1="126" y1="126" x2="126" y2="156"/><line x1="156" y1="126" x2="186" y2="126"/><line x1="186" y1="126" x2="186" y2="156"/><line x1="156" y1="126" x2="156" y2="156"/><line x1="6" y1="186" x2="36" y2="186"/><line x1="6" y1="156" x2="6" y2="186"/><line x1="66" y1="156" x2="66" y2="186"/><line x1="36" y1="186" x2="66" y2="186"/><line x1="66" y1="186" x2="96" y2="186"/><line x1="66" y1="156" x2="66" y2="186"/><line x1="96" y1="156" x2="126" y2="156"/><line x1="96" y1="186" x2="126" y2="186"/><line x1="126" y1="186" x2="156" y2="186"/><line x1="186" y1="156" x2="186" y2="186"/><line x1="156" y1="186" x2="186" y2="186"/><circle cx="111" cy="141" r="7" class="mk"/><circle cx="141" cy="21" r="7" class="mk"/></svg></figure>
+            </div>
+        </section>
+
+        <section id="fold-out">
+            <h2>Module &mdash; Fold-Out</h2>
+            <p class="lead">Six squares on a 4&times;4 lattice, columns numbered
+            <span class="k">1&ndash;4</span> and rows lettered <span class="k">A&ndash;D</span>.
+            The six squares always fold into a cube.</p>
+
+            <div class="note">Take the grid one row at a time &mdash; <em>"row B: nothing, star,
+            circle, nothing"</em> &mdash; and write it down before you start folding. The symbols are
+            always circle, triangle, square, star, cross and crescent, one of each, so every square
+            has a name. Exactly one square is drawn with a heavy ring round it: the
+            <strong>anchor</strong>.</div>
+
+            <h3>Folding the net</h3>
+            <p>Work out which squares end up on opposite faces of the cube. Three rules settle
+            every net this module can show.</p>
+            <ol class="rules">
+                <li>Any <strong>three squares in a straight line</strong>: the two on the ends are
+                opposite faces.</li>
+                <li>Along a <strong>run that turns at every step</strong>, the two squares three
+                steps apart are opposite faces.</li>
+                <li>Once two pairs are known, the <strong>two squares left over</strong> are the
+                third pair.</li>
+            </ol>
+
+            <div class="figs">
+                <figure><figcaption>Rule (a)</figcaption><svg viewBox="0 0 208 208" width="196" height="196" role="img" aria-label="Rule 1"><text x="48" y="18">1</text><text x="92" y="18">2</text><text x="136" y="18">3</text><text x="180" y="18">4</text><text x="13" y="54">A</text><text x="13" y="98">B</text><text x="13" y="142">C</text><text x="13" y="186">D</text><rect class="off" x="26" y="26" width="44" height="44"/><rect class="off" x="70" y="26" width="44" height="44"/><rect class="off" x="114" y="26" width="44" height="44"/><rect class="off" x="158" y="26" width="44" height="44"/><rect class="on" x="26" y="70" width="44" height="44"/><rect class="on" x="70" y="70" width="44" height="44"/><rect class="on" x="114" y="70" width="44" height="44"/><rect class="off" x="158" y="70" width="44" height="44"/><rect class="off" x="26" y="114" width="44" height="44"/><rect class="off" x="70" y="114" width="44" height="44"/><rect class="off" x="114" y="114" width="44" height="44"/><rect class="off" x="158" y="114" width="44" height="44"/><rect class="off" x="26" y="158" width="44" height="44"/><rect class="off" x="70" y="158" width="44" height="44"/><rect class="off" x="114" y="158" width="44" height="44"/><rect class="off" x="158" y="158" width="44" height="44"/><circle class="mk" cx="48" cy="92" r="9"/><circle class="mk" cx="136" cy="92" r="9"/></svg></figure>
+                <figure><figcaption>Rule (b)</figcaption><svg viewBox="0 0 208 208" width="196" height="196" role="img" aria-label="Rule 2"><text x="48" y="18">1</text><text x="92" y="18">2</text><text x="136" y="18">3</text><text x="180" y="18">4</text><text x="13" y="54">A</text><text x="13" y="98">B</text><text x="13" y="142">C</text><text x="13" y="186">D</text><rect class="on" x="26" y="26" width="44" height="44"/><rect class="on" x="70" y="26" width="44" height="44"/><rect class="off" x="114" y="26" width="44" height="44"/><rect class="off" x="158" y="26" width="44" height="44"/><rect class="off" x="26" y="70" width="44" height="44"/><rect class="on" x="70" y="70" width="44" height="44"/><rect class="on" x="114" y="70" width="44" height="44"/><rect class="off" x="158" y="70" width="44" height="44"/><rect class="off" x="26" y="114" width="44" height="44"/><rect class="off" x="70" y="114" width="44" height="44"/><rect class="off" x="114" y="114" width="44" height="44"/><rect class="off" x="158" y="114" width="44" height="44"/><rect class="off" x="26" y="158" width="44" height="44"/><rect class="off" x="70" y="158" width="44" height="44"/><rect class="off" x="114" y="158" width="44" height="44"/><rect class="off" x="158" y="158" width="44" height="44"/><circle class="mk" cx="48" cy="48" r="9"/><circle class="mk" cx="136" cy="92" r="9"/></svg></figure>
+                <figure><figcaption>Worked example</figcaption><svg viewBox="0 0 208 208" width="196" height="196" role="img" aria-label="Worked example"><text x="48" y="18">1</text><text x="92" y="18">2</text><text x="136" y="18">3</text><text x="180" y="18">4</text><text x="13" y="54">A</text><text x="13" y="98">B</text><text x="13" y="142">C</text><text x="13" y="186">D</text><rect class="off" x="26" y="26" width="44" height="44"/><rect class="on" x="70" y="26" width="44" height="44"/><rect class="off" x="114" y="26" width="44" height="44"/><rect class="off" x="158" y="26" width="44" height="44"/><rect class="on" x="26" y="70" width="44" height="44"/><rect class="on" x="70" y="70" width="44" height="44"/><rect class="on" x="114" y="70" width="44" height="44"/><rect class="on" x="158" y="70" width="44" height="44"/><rect class="off" x="26" y="114" width="44" height="44"/><rect class="on" x="70" y="114" width="44" height="44"/><rect class="off" x="114" y="114" width="44" height="44"/><rect class="off" x="158" y="114" width="44" height="44"/><rect class="off" x="26" y="158" width="44" height="44"/><rect class="off" x="70" y="158" width="44" height="44"/><rect class="off" x="114" y="158" width="44" height="44"/><rect class="off" x="158" y="158" width="44" height="44"/></svg></figure>
+            </div>
+            <p>In the worked example the filled squares are
+            <span class="k">A2 B1 B2 B3 B4 C2</span>. Rule (a) applied three times gives every
+            pair: <span class="k">B1&ndash;B3</span>, <span class="k">B2&ndash;B4</span> and
+            <span class="k">A2&ndash;C2</span>.</p>
+
+            <h3>Which square to press</h3>
+            <p>Take the <strong>first</strong> row that applies, then press the square
+            <strong>opposite</strong> the one it names.</p>
+            <table>
+                <tr><th>If&hellip;</th><th>Find the square that is&hellip;</th></tr>
+                <tr><td>the bomb has any lit indicator</td><td class="k">the anchored one</td></tr>
+                <tr><td>otherwise, the serial's last digit is odd</td><td class="k">the star</td></tr>
+                <tr><td>otherwise</td><td class="k">the circle</td></tr>
+            </table>
+            <p>Pressing a wrong square is a strike, but the net is not re-dealt &mdash; the folding
+            you have already done still stands.</p>
+        </section>
+
+        <section id="tape-reader">
+            <h2>Module &mdash; Tape Reader</h2>
+            <p class="lead">A strip of instruction cells, a register showing the starting value, and
+            a keypad. Execute the tape by hand and type the result.</p>
+
+            <div class="note">Ask for the <strong>batteries, indicators and serial first</strong>.
+            Four of the instructions read the casing, and you cannot start without them. Then ask
+            for the starting value in the register, then the glyphs in order.</div>
+
+            <div class="note warn">Reading direction. If the serial number contains a
+            <strong>vowel</strong> (<span class="k">A E I O U</span>), read the tape
+            <strong>backwards</strong> &mdash; start from the end <em>away</em> from the triangular
+            marker. Otherwise read it forwards from the marker. Check this before the first
+            instruction, not after.</div>
+
+            <table>
+                <tr><th>Glyph</th><th>Name</th><th>Do this to the value</th></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Cells"><circle class="fill" cx="16" cy="16" r="8"/></svg></td><td class="k">Cells</td><td>Add the number of batteries.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Fork"><polyline points="21,6 12,15 19,16 10,26"/></svg></td><td class="k">Fork</td><td>If any indicator is lit, subtract&nbsp;3. Otherwise add&nbsp;3.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Halve"><path class="fill" d="M16,8 A8,8 0 0,0 16,24 Z"/><circle cx="16" cy="16" r="8"/></svg></td><td class="k">Halve</td><td>Halve the value, rounding down.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Double"><line x1="9" y1="9" x2="23" y2="23"/><line x1="9" y1="23" x2="23" y2="9"/></svg></td><td class="k">Double</td><td>Double the value.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Stamp"><rect x="7" y="7" width="18" height="18"/><rect class="fill" x="12" y="12" width="8" height="8"/></svg></td><td class="k">Stamp</td><td>Replace the value with the last digit of the serial.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Lift"><polygon class="fill" points="16,7 24,23 8,23"/></svg></td><td class="k">Lift</td><td>Add&nbsp;7.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Drop"><polygon class="fill" points="16,25 8,9 24,9"/></svg></td><td class="k">Drop</td><td>Subtract&nbsp;4.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Stash"><polygon class="fill" points="16,20 9,10 23,10"/><rect class="fill" x="8" y="23" width="16" height="3"/></svg></td><td class="k">Stash</td><td>Copy the value into the spare register. The value itself does not change.</td></tr>
+                <tr><td><svg class="gl" viewBox="0 0 32 32" width="26" height="26" role="img" aria-label="Recall"><polygon class="fill" points="16,12 23,22 9,22"/><rect class="fill" x="8" y="6" width="16" height="3"/></svg></td><td class="k">Recall</td><td>Replace the value with whatever is in the spare register.</td></tr>
+            </table>
+
+            <p>The value never leaves <span class="k">0&ndash;999</span> at any step, so a negative
+            or a four-digit number means a misread. Type the final value and press
+            <span class="k">ENT</span>; <span class="k">CLR</span> wipes the entry. There is no
+            partial feedback &mdash; a wrong value is a strike and the tape is unchanged.</p>
+        </section>
+
+        <section id="pipeworks">
+            <h2>Module &mdash; Pipeworks</h2>
+            <p class="lead">A 4&times;4 grid of pipe tiles, an inlet on the left, three outlets
+            <span class="k">X</span>, <span class="k">Y</span> and <span class="k">Z</span> on the
+            right, a lettered rule plate and a valve. Tapping a tile turns it; only the valve
+            commits.</p>
+
+            <div class="note">Turning tiles is <strong>free</strong> &mdash; no strike, no limit
+            &mdash; so build the whole route out loud before touching the valve. A tile with a
+            <strong>rivet</strong> on it will not turn; that is information, not a trap. A tile with
+            a <strong>red cross</strong> is a burst seal.</div>
+
+            <h3>Naming a tile</h3>
+            <p>Every tile is named by the edges it joins, clockwise from north:
+            <span class="k">N</span>, <span class="k">E</span>, <span class="k">S</span>,
+            <span class="k">W</span>. So <em>"C2 is an elbow, SW"</em> is complete and
+            unambiguous.</p>
+            <div class="figs">
+                <figure><figcaption>NS</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="NS"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="32" y2="0"/><line class="pi" x1="32" y1="32" x2="32" y2="64"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>EW</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="EW"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="64" y2="32"/><line class="pi" x1="32" y1="32" x2="0" y2="32"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>NE</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="NE"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="32" y2="0"/><line class="pi" x1="32" y1="32" x2="64" y2="32"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>ES</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="ES"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="64" y2="32"/><line class="pi" x1="32" y1="32" x2="32" y2="64"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>SW</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="SW"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="32" y2="64"/><line class="pi" x1="32" y1="32" x2="0" y2="32"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>WN</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="WN"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="0" y2="32"/><line class="pi" x1="32" y1="32" x2="32" y2="0"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>NES</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="NES"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="32" y2="0"/><line class="pi" x1="32" y1="32" x2="64" y2="32"/><line class="pi" x1="32" y1="32" x2="32" y2="64"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>ESW</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="ESW"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="64" y2="32"/><line class="pi" x1="32" y1="32" x2="32" y2="64"/><line class="pi" x1="32" y1="32" x2="0" y2="32"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>SWN</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="SWN"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="32" y2="64"/><line class="pi" x1="32" y1="32" x2="0" y2="32"/><line class="pi" x1="32" y1="32" x2="32" y2="0"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+                <figure><figcaption>WNE</figcaption><svg viewBox="0 0 64 64" width="70" height="70" role="img" aria-label="WNE"><rect class="off" x="1" y="1" width="62" height="62"/><line class="pi" x1="32" y1="32" x2="0" y2="32"/><line class="pi" x1="32" y1="32" x2="32" y2="0"/><line class="pi" x1="32" y1="32" x2="64" y2="32"/><circle class="hub" cx="32" cy="32" r="5"/></svg></figure>
+            </div>
+
+            <h3>Which outlet</h3>
+            <p>Add the number of <strong>batteries</strong> to the number of <strong>lit
+            indicators</strong>, and take the remainder on division by three:
+            <span class="k">0</span> is <span class="k">X</span>, <span class="k">1</span> is
+            <span class="k">Y</span>, <span class="k">2</span> is <span class="k">Z</span>.
+            The outlets are lettered downwards.</p>
+
+            <h3>The rules</h3>
+            <p>Flow starts at the inlet and spreads through every pair of tiles whose facing edges
+            are both open. A commit passes only when <strong>all</strong> of these hold.</p>
+            <ol class="rules">
+                <li>The flow reaches the target outlet.</li>
+                <li>The flow reaches <strong>no burst seal</strong>. This one always applies.</li>
+                <li>The rule on the plate holds.</li>
+            </ol>
+            <table>
+                <tr><th>Plate</th><th>The flow must&hellip;</th></tr>
+                <tr><td class="k">A</td><td>pass through exactly <strong>one</strong> tee</td></tr>
+                <tr><td class="k">B</td><td>pass through exactly <strong>two</strong> tees</td></tr>
+                <tr><td class="k">C</td><td>enter the outlet from the tile <strong>directly above</strong> it</td></tr>
+                <tr><td class="k">D</td><td>pass through <strong>every rivetted tile</strong></td></tr>
+            </table>
+            <p>Any route that satisfies all three is accepted, not just the one the module had in
+            mind. A failed commit is a strike and leaves the grid exactly as it is, so adjust rather
+            than start over.</p>
+        </section>
+
+        <section id="star-chart">
+            <h2>Module &mdash; Star Chart</h2>
+            <p class="lead">A constellation on a lettered field. Stars come in three brightnesses:
+            <strong>bright</strong> (large, with a wide halo), <strong>medium</strong> (smaller,
+            faint halo) and <strong>dim</strong> (small and grey, no halo).</p>
+
+            <div class="note warn">The chart is <strong>rotated</strong>, by any angle. The grid
+            letters are for pointing at a star &mdash; never for identifying the constellation.
+            Never ask "which star is at the top"; ask about counts and distances.</div>
+
+            <div class="note">Do this <strong>first, before anything else</strong>: discard any
+            <em>dim</em> star that has nothing else near it &mdash; nothing within about one grid
+            square. Those are field stars, not part of the constellation, and
+            <strong>every rule below ignores them</strong>. A lone <em>bright</em> star is never
+            discarded; on one constellation it is the whole point.</div>
+
+            <h3>Identifying it</h3>
+            <p>Count the stars that are left, then count how many of those are bright. No two
+            entries share that pair, so it identifies the constellation on its own. The third column
+            is there to confirm it.</p>
+            <table>
+                <tr><th>Constellation</th><th>Stars</th><th>Bright</th><th>Confirm</th></tr>
+                <tr><td class="k">The Ladle</td><td>5</td><td>1</td><td>the other four trail away from it in a chain</td></tr>
+                <tr><td class="k">The Anvil</td><td>6</td><td>2</td><td>the two bright ones are the closest pair on the chart</td></tr>
+                <tr><td class="k">The Hook</td><td>6</td><td>1</td><td>the bright one sits well apart from all the others</td></tr>
+                <tr><td class="k">The Kite</td><td>7</td><td>3</td><td>the three bright ones lie in a straight line</td></tr>
+                <tr><td class="k">The Twins</td><td>8</td><td>2</td><td>the bright ones are far apart, each with a dim star beside it</td></tr>
+                <tr><td class="k">The Crown</td><td>8</td><td>3</td><td>the three bright ones form a roughly equal-sided triangle</td></tr>
+            </table>
+
+            <h3>Which star to press</h3>
+            <p>Use the left column if the serial's <strong>last digit is odd</strong>, the right
+            column if it is <strong>even</strong>. Every rule here is about the constellation's own
+            stars &mdash; the field stars were thrown away in the step above, and counting one of
+            them in will give the wrong answer. "The middle" means the middle of the
+            constellation.</p>
+            <table>
+                <tr><th>Constellation</th><th>Odd &mdash; press&hellip;</th><th>Even &mdash; press&hellip;</th></tr>
+                <tr><td class="k">The Ladle</td><td>the star nearest the bright one</td><td>the star furthest from the bright one</td></tr>
+                <tr><td class="k">The Anvil</td><td>the dim star furthest from the bright pair</td><td>the star nearest the bright pair, brights aside</td></tr>
+                <tr><td class="k">The Hook</td><td>the star furthest from the bright one</td><td>the star nearest the middle, the bright one aside</td></tr>
+                <tr><td class="k">The Kite</td><td>the middle star of the bright line</td><td>the star furthest from that line</td></tr>
+                <tr><td class="k">The Twins</td><td>the dim companion of whichever bright star is nearer the middle</td><td>the other dim companion</td></tr>
+                <tr><td class="k">The Crown</td><td>the star nearest the triangle's centre, brights aside</td><td>the star furthest from the triangle's centre</td></tr>
+            </table>
+
+            <p>Below, each constellation is drawn upright. On the bomb it will be turned. The solid
+            ring marks the odd-serial answer, the dashed ring the even-serial one.</p>
+            <div class="figs">
+                <figure><figcaption>The Ladle</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Ladle"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="141.5" cy="139.0" r="7.0"/><circle class="r1" cx="119.1" cy="120.5" r="13"/><circle class="st" cx="119.1" cy="120.5" r="4.5"/><circle class="st" cx="104.6" cy="95.7" r="4.5"/><circle class="st" cx="78.8" cy="80.7" r="4.5"/><circle class="r2" cx="55.9" cy="64.2" r="13"/><circle class="st" cx="55.9" cy="64.2" r="2.5"/></svg></figure>
+                <figure><figcaption>The Anvil</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Anvil"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="91.5" cy="111.7" r="7.0"/><circle class="st" cx="102.4" cy="95.1" r="7.0"/><circle class="st" cx="136.5" cy="100.8" r="4.5"/><circle class="r2" cx="78.2" cy="85.2" r="13"/><circle class="st" cx="78.2" cy="85.2" r="2.5"/><circle class="st" cx="71.5" cy="134.0" r="4.5"/><circle class="r1" cx="119.8" cy="73.1" r="13"/><circle class="st" cx="119.8" cy="73.1" r="2.5"/></svg></figure>
+                <figure><figcaption>The Hook</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Hook"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="35.4" cy="140.7" r="7.0"/><circle class="r2" cx="97.2" cy="108.2" r="13"/><circle class="st" cx="97.2" cy="108.2" r="4.5"/><circle class="st" cx="126.2" cy="122.1" r="4.5"/><circle class="r1" cx="139.0" cy="74.3" r="13"/><circle class="st" cx="139.0" cy="74.3" r="4.5"/><circle class="st" cx="92.7" cy="70.0" r="2.5"/><circle class="st" cx="109.5" cy="84.8" r="2.5"/></svg></figure>
+                <figure><figcaption>The Kite</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Kite"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="82.4" cy="86.9" r="7.0"/><circle class="r1" cx="101.2" cy="103.9" r="13"/><circle class="st" cx="101.2" cy="103.9" r="7.0"/><circle class="st" cx="120.1" cy="120.9" r="7.0"/><circle class="st" cx="101.7" cy="137.2" r="4.5"/><circle class="st" cx="69.4" cy="106.8" r="4.5"/><circle class="st" cx="102.2" cy="79.2" r="2.5"/><circle class="r2" cx="123.0" cy="65.1" r="13"/><circle class="st" cx="123.0" cy="65.1" r="2.5"/></svg></figure>
+                <figure><figcaption>The Twins</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Twins"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="64.0" cy="104.0" r="7.0"/><circle class="st" cx="147.8" cy="79.5" r="7.0"/><circle class="r1" cx="47.4" cy="116.7" r="13"/><circle class="st" cx="47.4" cy="116.7" r="2.5"/><circle class="r2" cx="160.4" cy="98.8" r="13"/><circle class="st" cx="160.4" cy="98.8" r="2.5"/><circle class="st" cx="72.8" cy="130.4" r="4.5"/><circle class="st" cx="99.4" cy="122.0" r="4.5"/><circle class="st" cx="95.9" cy="85.4" r="4.5"/><circle class="st" cx="112.2" cy="63.3" r="4.5"/></svg></figure>
+                <figure><figcaption>The Crown</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Crown"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="74.8" cy="126.8" r="7.0"/><circle class="st" cx="93.4" cy="66.7" r="7.0"/><circle class="st" cx="136.1" cy="112.9" r="7.0"/><circle class="st" cx="123.3" cy="86.8" r="4.5"/><circle class="r1" cx="103.5" cy="117.3" r="13"/><circle class="st" cx="103.5" cy="117.3" r="4.5"/><circle class="st" cx="87.5" cy="85.5" r="4.5"/><circle class="st" cx="116.8" cy="137.4" r="2.5"/><circle class="r2" cx="64.5" cy="66.6" r="13"/><circle class="st" cx="64.5" cy="66.6" r="2.5"/></svg></figure>
             </div>
         </section>
 

@@ -59,6 +59,10 @@ add_library(panic_game STATIC
     src/puzzles/complicated_wires_puzzle.cpp
     src/puzzles/wire_sequences_puzzle.cpp
     src/puzzles/maze_puzzle.cpp
+    src/puzzles/fold_out_puzzle.cpp
+    src/puzzles/tape_reader_puzzle.cpp
+    src/puzzles/pipeworks_puzzle.cpp
+    src/puzzles/star_chart_puzzle.cpp
     src/puzzles/needy_puzzle.cpp
     src/puzzles/venting_gas_puzzle.cpp
     src/puzzles/capacitor_puzzle.cpp

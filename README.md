@@ -43,6 +43,10 @@ A bomb fills as many bays as the difficulty asks for, drawn at random without re
 | Complicated Wires | Cuts each wire or not, from its colours, star and LED |
 | Wire Sequences | Cuts wires across four panels, counting each colour as it goes |
 | Mazes | Steers a marker to the goal through walls only the Expert can see |
+| Fold-Out | Folds a flat cube net in their head and presses the opposite face |
+| Tape Reader | Executes a printed program by hand and types the result |
+| Pipeworks | Rotates pipe tiles to route flow to an outlet only the Expert knows |
+| Star Chart | Identifies a rotated constellation and presses the star it names |
 
 At difficulty 3 and above, up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not
 counted in the module total — they wake up periodically for the whole round and demand attention:
@@ -188,7 +192,7 @@ reg.add("Toggles", [] { return std::unique_ptr<Puzzle>(new TogglesPuzzle()); });
 // src/bomb.cpp -- and add the same name to the module_templates list, which is
 // the pool bombs are drawn from (and the debug picker's menu). Remember to bump
 // the std::array size.
-constexpr std::array<const char*, 15> module_templates = { ..., "Toggles" };
+constexpr std::array<const char*, 19> module_templates = { ..., "Toggles" };
 ```
 
 ```cmake

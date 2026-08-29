@@ -12,13 +12,17 @@
 #include "puzzles/button_puzzle.h"
 #include "puzzles/capacitor_puzzle.h"
 #include "puzzles/complicated_wires_puzzle.h"
+#include "puzzles/fold_out_puzzle.h"
 #include "puzzles/keypads_puzzle.h"
 #include "puzzles/knobs_puzzle.h"
 #include "puzzles/maze_puzzle.h"
 #include "puzzles/memory_puzzle.h"
 #include "puzzles/morse_puzzle.h"
 #include "puzzles/passwords_puzzle.h"
+#include "puzzles/pipeworks_puzzle.h"
 #include "puzzles/simon_puzzle.h"
+#include "puzzles/star_chart_puzzle.h"
+#include "puzzles/tape_reader_puzzle.h"
 #include "puzzles/venting_gas_puzzle.h"
 #include "puzzles/whos_on_first_puzzle.h"
 #include "puzzles/wire_sequences_puzzle.h"
@@ -56,6 +60,14 @@ void register_builtin_puzzles() {
         return std::unique_ptr<Puzzle>(new WireSequencesPuzzle());
     });
     reg.add("Mazes", [] { return std::unique_ptr<Puzzle>(new MazePuzzle()); });
+    reg.add("Fold-Out",
+            [] { return std::unique_ptr<Puzzle>(new FoldOutPuzzle()); });
+    reg.add("Tape Reader",
+            [] { return std::unique_ptr<Puzzle>(new TapeReaderPuzzle()); });
+    reg.add("Pipeworks",
+            [] { return std::unique_ptr<Puzzle>(new PipeworksPuzzle()); });
+    reg.add("Star Chart",
+            [] { return std::unique_ptr<Puzzle>(new StarChartPuzzle()); });
     reg.add("Venting Gas",
             [] { return std::unique_ptr<Puzzle>(new VentingGasPuzzle()); });
     reg.add("Capacitor Discharge",
@@ -77,7 +89,7 @@ constexpr size_t slot_count = 6;   // three front bays, three back
 // Every module template that can appear on a bomb, in a fixed order: bomb
 // generation shuffles this, and PuzzleRegistry::names() cannot be used for it
 // because an unordered_map's order is not reproducible from the bomb's seed.
-constexpr std::array<const char*, 14> module_templates = {
+constexpr std::array<const char*, 18> module_templates = {
     "Wires",
     "The Button",
     "Keypads",
@@ -89,6 +101,10 @@ constexpr std::array<const char*, 14> module_templates = {
     "Complicated Wires",
     "Wire Sequences",
     "Mazes",
+    "Fold-Out",
+    "Tape Reader",
+    "Pipeworks",
+    "Star Chart",
     "Venting Gas",
     "Capacitor Discharge",
     "Knobs",
