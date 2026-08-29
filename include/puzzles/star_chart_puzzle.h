@@ -4,9 +4,9 @@
 // Defuser describes what they see, the Expert identifies it from properties
 // that survive rotation, and then names the star to press.
 //
-// Every catalogue entry has a unique (total stars, bright stars) signature, so
-// identification is a count rather than a judgement call; the shape line in the
-// manual confirms the answer rather than deciding it.
+// Two catalogue entries share every (total stars, bright stars) signature, so
+// counting only narrows the chart to a pair; the manual's description of the
+// layout -- rotation-proof like the counts -- is what decides between them.
 //
 // The catalogue points are used exactly as stored, only rotated and translated.
 // Rotation is an isometry, so every distance ratio the manual's target rules

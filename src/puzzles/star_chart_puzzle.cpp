@@ -39,13 +39,18 @@ constexpr float lamp_clear = 56.0f;
 
 // ---------------------------------------------------------------------------
 // The catalogue. Positions are centred on the constellation's own centroid and
-// were searched offline (scratchpad stars2.py) against exactly the checks the
-// manual promises: no two stars closer than 38px, every star with a neighbour
-// inside about one grid square (bar the Hook's deliberate outlier), the shape
-// fingerprint holding, and both target rules beating their runner-up by 30%.
+// were searched by scripts/star_chart_catalogue.py against exactly the checks
+// the manual promises: no two stars closer than 38px, every star with a
+// neighbour inside about one grid square (bar the Hook's deliberate outlier),
+// the shape fingerprint holding, and both target rules beating their runner-up
+// by 30%.
 //
-// The (count, bright) signature is unique across the six, which is what makes
-// "count the stars, then count the bright ones" a complete identification.
+// Every (count, bright) signature is shared by exactly two entries, so counting
+// narrows the chart to a pair and no further. What separates that pair is the
+// manual's DESCRIPTION line -- a fact about the layout that rotation cannot
+// touch either -- and the search rejects any candidate that also answers to its
+// partner's description. `star_chart_catalogue.py verify` re-checks all of it
+// against this table.
 // ---------------------------------------------------------------------------
 struct StarDef { float x, y; uint8_t tier; };
 
@@ -57,7 +62,7 @@ struct Catalogue {
     StarDef stars[max_stars];
 };
 
-constexpr int catalogue_count = 6;
+constexpr int catalogue_count = 12;
 constexpr Catalogue catalogue[catalogue_count] = {
     {"The Ladle", 5, 1, 4, {
         {+0.2257f, +0.2117f, 0},
@@ -66,13 +71,12 @@ constexpr Catalogue catalogue[catalogue_count] = {
         {-0.1152f, -0.1047f, 1},
         {-0.2394f, -0.1948f, 2},
     }},
-    {"The Anvil", 6, 5, 3, {
-        {-0.0464f, +0.0639f, 0},
-        {+0.0132f, -0.0264f, 0},
-        {+0.1985f, +0.0045f, 1},
-        {-0.1183f, -0.0803f, 2},
-        {-0.1547f, +0.1845f, 1},
-        {+0.1076f, -0.1462f, 2},
+    {"The Lantern", 5, 1, 3, {
+        {+0.0123f, -0.0011f, 0},
+        {-0.0971f, -0.0221f, 1},
+        {-0.0113f, -0.1546f, 1},
+        {+0.1614f, +0.0325f, 2},
+        {-0.0653f, +0.1454f, 1},
     }},
     {"The Hook", 6, 3, 1, {
         {-0.3513f, +0.2210f, 0},
@@ -82,6 +86,30 @@ constexpr Catalogue catalogue[catalogue_count] = {
         {-0.0394f, -0.1628f, 2},
         {+0.0515f, -0.0828f, 2},
     }},
+    {"The Serpent", 6, 5, 0, {
+        {+0.1739f, +0.2216f, 1},
+        {+0.0443f, +0.2053f, 2},
+        {-0.0491f, +0.0825f, 0},
+        {-0.1148f, -0.0465f, 1},
+        {-0.0748f, -0.1761f, 2},
+        {+0.0206f, -0.2868f, 1},
+    }},
+    {"The Anvil", 6, 5, 3, {
+        {-0.0464f, +0.0639f, 0},
+        {+0.0132f, -0.0264f, 0},
+        {+0.1985f, +0.0045f, 1},
+        {-0.1183f, -0.0803f, 2},
+        {-0.1547f, +0.1845f, 1},
+        {+0.1076f, -0.1462f, 2},
+    }},
+    {"The Scales", 6, 4, 5, {
+        {+0.1195f, -0.2114f, 0},
+        {-0.1474f, +0.2387f, 0},
+        {-0.0469f, -0.0631f, 1},
+        {-0.0863f, +0.0828f, 1},
+        {+0.0359f, +0.0240f, 2},
+        {+0.1252f, -0.0710f, 2},
+    }},
     {"The Kite", 7, 1, 6, {
         {-0.0958f, -0.0712f, 0},
         {+0.0067f, +0.0213f, 0},
@@ -90,6 +118,15 @@ constexpr Catalogue catalogue[catalogue_count] = {
         {-0.1661f, +0.0369f, 1},
         {+0.0119f, -0.1131f, 2},
         {+0.1248f, -0.1894f, 2},
+    }},
+    {"The Talon", 7, 2, 3, {
+        {-0.0562f, -0.0197f, 0},
+        {+0.0653f, -0.0117f, 0},
+        {+0.2780f, +0.1391f, 0},
+        {+0.1136f, +0.1401f, 1},
+        {-0.1586f, +0.0170f, 1},
+        {-0.0506f, -0.1238f, 2},
+        {-0.1915f, -0.1409f, 1},
     }},
     {"The Twins", 8, 2, 3, {
         {-0.1955f, +0.0215f, 0},
@@ -101,6 +138,16 @@ constexpr Catalogue catalogue[catalogue_count] = {
         {-0.0223f, -0.0792f, 1},
         {+0.0662f, -0.1995f, 1},
     }},
+    {"The Comet", 8, 7, 2, {
+        {+0.0127f, +0.3075f, 0},
+        {-0.0754f, +0.2487f, 0},
+        {-0.1919f, +0.1437f, 1},
+        {-0.2087f, -0.0053f, 2},
+        {-0.1006f, -0.1002f, 1},
+        {+0.0624f, -0.1206f, 1},
+        {+0.2020f, -0.1859f, 2},
+        {+0.2995f, -0.2878f, 1},
+    }},
     {"The Crown", 8, 4, 7, {
         {-0.1370f, +0.1458f, 0},
         {-0.0361f, -0.1808f, 0},
@@ -110,6 +157,16 @@ constexpr Catalogue catalogue[catalogue_count] = {
         {-0.0677f, -0.0786f, 1},
         {+0.0915f, +0.2031f, 2},
         {-0.1927f, -0.1814f, 2},
+    }},
+    {"The Furnace", 8, 4, 7, {
+        {-0.0442f, -0.0241f, 0},
+        {+0.0222f, +0.0576f, 0},
+        {-0.1464f, +0.0572f, 0},
+        {-0.0008f, -0.1659f, 1},
+        {-0.0628f, +0.1266f, 1},
+        {+0.1127f, -0.0909f, 2},
+        {-0.0820f, +0.2630f, 1},
+        {+0.2013f, -0.2234f, 2},
     }},
 };
 
