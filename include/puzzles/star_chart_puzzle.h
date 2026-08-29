@@ -30,6 +30,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A night field read through glass.
+    SurfaceMaterial material() const override {
+        return materials::screen;
+    }
 
 private:
     struct Star {

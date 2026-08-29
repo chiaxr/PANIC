@@ -12,6 +12,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // The face is one lit question display.
+    SurfaceMaterial material() const override {
+        return materials::screen;
+    }
 
 protected:
     void on_activate() override;

@@ -19,6 +19,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A big lit readout above the buttons.
+    SurfaceMaterial material() const override {
+        return materials::screen;
+    }
 
 private:
     void deal_stage();

@@ -17,6 +17,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A machined knob beside its indicator lights.
+    SurfaceMaterial material() const override {
+        return materials::metal_panel;
+    }
 
 protected:
     void on_activate() override;

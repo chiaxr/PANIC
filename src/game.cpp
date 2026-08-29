@@ -430,6 +430,8 @@ bool rect_hovered(Rectangle rect) {
 }   // namespace
 
 void Game::setup() {
+    shading_.load();
+
     camera_.position = camera_free_pos;
     camera_.target = camera_free_target;
     camera_.up = Vector3{0.0f, 1.0f, 0.0f};
@@ -484,7 +486,10 @@ void Game::refresh_menu_bomb() {
     rebuild_bomb();
 }
 
-void Game::unload() { bomb_.unload(); }
+void Game::unload() {
+    bomb_.unload();
+    shading_.unload();
+}
 
 Matrix Game::bomb_transform() const { return pose_matrix(yaw_, pitch_); }
 
@@ -1393,8 +1398,8 @@ void Game::draw_instructions() const {
     y += instr_section_gap;
 
     header("Read the casing out loud");
-    line("The rim prints the serial number, batteries and");
-    line("indicators. Module rules depend on them.");
+    line("The rim carries the serial number, the battery tray");
+    line("and the indicators. Module rules depend on them.");
 
     // Manual link row.
     const Rectangle link = manual_link_rect(l);
@@ -1645,10 +1650,12 @@ void Game::draw() {
     ClearBackground(Color{18, 19, 22, 255});
 
     BeginMode3D(camera_);
+    shading_.begin(camera_.position);
     rlPushMatrix();
     rlMultMatrixf(MatrixToFloat(bomb_transform()));
-    bomb_.draw_faces_3d();
+    bomb_.draw_faces_3d(shading_);
     rlPopMatrix();
+    shading_.end();
     EndMode3D();
 
     switch (state_) {

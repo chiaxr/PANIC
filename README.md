@@ -25,7 +25,7 @@ only the Defuser can see:
 | Widget | What to read out |
 | --- | --- |
 | Serial # | The six-character code (its last digit's parity is the most-used fact) |
-| Batteries | How many battery cells are shown |
+| Batteries | How many cells sit in the battery tray on the top edge |
 | Indicators | Which labelled lights (`CAR`, `FRK`, …) are lit vs unlit |
 
 A bomb fills as many bays as the difficulty asks for, drawn at random without repeats:
@@ -122,6 +122,13 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+
+    // What the face is made of, which is how the renderer lights it. Pick the
+    // entry from `materials` (include/shading.h) that matches the components
+    // you draw; leaving it out gives the moulded plastic of a bare panel.
+    SurfaceMaterial material() const override {
+        return materials::glossy_plastic;
+    }
 
 private:
     bool on_[4] = {false, false, false, false};

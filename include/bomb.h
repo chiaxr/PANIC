@@ -3,8 +3,10 @@
 // The Bomb owns its randomized attributes and up to six module slots laid out on
 // a rectangular slab (three on the front face, three on the back). Every slot is
 // available for a Puzzle module. The bomb-wide attributes the modules depend on
-// (serial number, batteries, indicators) are printed on the thin rim edges of
-// the casing as InfoPanels, so they occupy no module space.
+// (serial number, batteries, indicators) live on the thin rim edges of the
+// casing, so they occupy no module space: the serial and the indicators are
+// printed on InfoPanels, while the batteries are real cells sitting in a
+// recessed tray milled into the top rim.
 //
 // Each slot / panel renders its 2D content into its own RenderTexture, which the
 // renderer maps onto a face quad in 3D.
@@ -23,6 +25,7 @@
 
 #include "bomb_attributes.h"
 #include "puzzle.h"
+#include "shading.h"
 
 enum class WidgetType { SERIAL, BATTERIES, INDICATOR };
 
@@ -44,7 +47,8 @@ struct ModuleSlot {
     std::unique_ptr<Puzzle> puzzle;
 };
 
-// A passive attribute readout on a thin rim edge (serial / batteries / …).
+// A passive attribute readout on a thin rim edge (serial / indicators), or the
+// floor of the battery tray.
 struct InfoPanel {
     FaceQuad quad;
     WidgetType widget = WidgetType::SERIAL;
@@ -87,8 +91,9 @@ class Bomb {
     void render_module_textures();
 
     // Draw the slab body, module face quads, and rim panels in bomb-local space
-    // (the caller applies the rotation transform).
-    void draw_faces_3d() const;
+    // (the caller applies the rotation transform). `shading` is the scene's
+    // light: each part sets the material it is made of before drawing.
+    void draw_faces_3d(const PhongShader& shading) const;
 
     // ---- Queries ----
     const std::vector<ModuleSlot>& slots() const { return slots_; }
@@ -105,6 +110,10 @@ private:
                      const char* only_module);
     void build_info_panels();
     void draw_info_panel(const InfoPanel& panel) const;
+    // The slab, drawn as several boxes so the top rim can carry a real recess.
+    void draw_casing(const PhongShader& shading) const;
+    // The battery tray: recess walls, well dividers, and the cells themselves.
+    void draw_battery_tray(const PhongShader& shading) const;
 
     BombAttributes attrs_;
     std::vector<ModuleSlot> slots_;

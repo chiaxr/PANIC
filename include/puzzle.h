@@ -14,6 +14,7 @@
 //   2. Read what you need from BombAttributes in init() to pick your variables,
 //      taking all randomness from the seeded rng that init() is handed.
 //   3. Register a factory in register_builtin_puzzles() (bomb.cpp).
+//   4. Override material() if the components you draw are not panel plastic.
 
 #include <functional>
 #include <memory>
@@ -25,6 +26,7 @@
 #include "raylib.h"
 
 #include "bomb_attributes.h"
+#include "shading.h"
 
 // Side length, in pixels, of the square render target each module draws into.
 // Sized for the text-heavy modules (Who's on First, Passwords, Memory), which
@@ -82,6 +84,13 @@ public:
     // Issue 2D draw calls into the currently-bound render target
     // (origin top-left, extent [0, module_tex_size] on both axes).
     virtual void draw() = 0;
+
+    // What the module's face is made of, which is how the renderer lights it.
+    // Infer it from the components the module actually draws and pick the
+    // closest entry from `materials` (shading.h): wires read as rubber, a
+    // knob or a lever as metal, a big lit readout as glass, and so on. The
+    // default is the moulded plastic a bare panel is made of.
+    virtual SurfaceMaterial material() const { return materials::matte_plastic; }
 
     // True once the module has been correctly disarmed.
     bool is_solved() const { return solved_; }

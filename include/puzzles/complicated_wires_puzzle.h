@@ -16,6 +16,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // Wires again, with LEDs and metal terminals.
+    SurfaceMaterial material() const override {
+        return materials::rubber;
+    }
 
 private:
     struct Wire {

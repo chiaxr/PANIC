@@ -34,6 +34,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // Pipe tiles and a valve, all metal.
+    SurfaceMaterial material() const override {
+        return materials::metal_panel;
+    }
 
 private:
     // A tile is the set of edges it joins: bit 0 north, 1 east, 2 south,

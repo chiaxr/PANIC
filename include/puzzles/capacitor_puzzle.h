@@ -13,6 +13,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A metal discharge lever over the meter.
+    SurfaceMaterial material() const override {
+        return materials::metal_panel;
+    }
 
 private:
     bool lever_at_pixel(Vector2 p) const;

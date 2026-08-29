@@ -21,6 +21,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // One big moulded button and its housing.
+    SurfaceMaterial material() const override {
+        return materials::glossy_plastic;
+    }
 
     // The countdown digit a given strip demands on release.
     static int strip_release_digit(StripColor strip);

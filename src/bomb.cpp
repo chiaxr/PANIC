@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -86,6 +87,36 @@ constexpr float face_offset = 0.01f;    // push quads just outside the casing
 constexpr std::array<float, 3> slot_x = {-1.40f, 0.0f, 1.40f};
 constexpr size_t slot_count = 6;   // three front bays, three back
 
+// Battery compartment: a rectangular recess milled into the left end of the top
+// rim, split by dividers into `battery_slot_count` cell wells. The cells are
+// real cylinders lying along Z that stand proud of the casing; a well with no
+// cell in it shows its bare contacts, so the count is read by looking, not by
+// reading a label.
+constexpr int battery_slot_count = 4;
+constexpr float battery_radius = 0.085f;   // cell radius
+constexpr float battery_length = 0.38f;    // cell length, along Z
+constexpr float battery_pitch = 0.245f;    // well spacing, along X
+constexpr float tray_depth = 0.10f;        // how far the recess sinks
+constexpr float tray_half_w =
+    battery_slot_count * battery_pitch * 0.5f + 0.03f;
+constexpr float tray_half_d = battery_length * 0.5f + 0.055f;
+constexpr float tray_floor_y = half_height - tray_depth;
+constexpr float tray_margin = 0.18f;       // rim left outboard of the recess
+constexpr float tray_center_x = -(half_width - tray_half_w - tray_margin);
+constexpr float divider_half_w = 0.012f;
+constexpr float divider_height = 0.055f;
+
+// Centre of cell well `i`, measured from the middle of the tray.
+constexpr float battery_slot_offset(int i) {
+    return (static_cast<float>(i) -
+            (battery_slot_count - 1) * 0.5f) * battery_pitch;
+}
+
+// Centre of cell well `i` in bomb-local X.
+constexpr float battery_slot_x(int i) {
+    return tray_center_x + battery_slot_offset(i);
+}
+
 // Every module template that can appear on a bomb, in a fixed order: bomb
 // generation shuffles this, and PuzzleRegistry::names() cannot be used for it
 // because an unordered_map's order is not reproducible from the bomb's seed.
@@ -152,6 +183,131 @@ void draw_face_quad(const FaceQuad& q) {
     rlSetTexture(0);
 }
 
+// ---- 3D primitives -------------------------------------------------------
+// These only lay down geometry: colour comes from the vertex colour and the
+// shape from the normals, and PhongShader does the lighting. Every face is
+// wound counter-clockwise as seen from outside, so backface culling can stay
+// on, and every vertex carries a normal -- rlgl keeps handing the last normal
+// to each new vertex, so geometry that sets none inherits whatever came before.
+
+Color darken(Color c, float k) {
+    return Color{static_cast<unsigned char>(c.r * k),
+                 static_cast<unsigned char>(c.g * k),
+                 static_cast<unsigned char>(c.b * k), c.a};
+}
+
+// Quad a-b-c-d, wound so that (b-a) x (d-a) is the outward normal.
+void draw_quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color col) {
+    const Vector3 n = Vector3Normalize(Vector3CrossProduct(
+        Vector3Subtract(b, a), Vector3Subtract(d, a)));
+    rlBegin(RL_QUADS);
+    rlColor4ub(col.r, col.g, col.b, col.a);
+    rlNormal3f(n.x, n.y, n.z);
+    rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
+    rlTexCoord2f(0.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
+    rlTexCoord2f(0.0f, 0.0f); rlVertex3f(c.x, c.y, c.z);
+    rlTexCoord2f(0.0f, 0.0f); rlVertex3f(d.x, d.y, d.z);
+    rlEnd();
+}
+
+// Axis-aligned box from its min to its max corner.
+void draw_box(Vector3 lo, Vector3 hi, Color col) {
+    draw_quad(Vector3{lo.x, hi.y, hi.z}, Vector3{hi.x, hi.y, hi.z},
+              Vector3{hi.x, hi.y, lo.z}, Vector3{lo.x, hi.y, lo.z}, col);
+    draw_quad(Vector3{lo.x, lo.y, lo.z}, Vector3{hi.x, lo.y, lo.z},
+              Vector3{hi.x, lo.y, hi.z}, Vector3{lo.x, lo.y, hi.z}, col);
+    draw_quad(Vector3{lo.x, lo.y, hi.z}, Vector3{hi.x, lo.y, hi.z},
+              Vector3{hi.x, hi.y, hi.z}, Vector3{lo.x, hi.y, hi.z}, col);
+    draw_quad(Vector3{hi.x, lo.y, lo.z}, Vector3{lo.x, lo.y, lo.z},
+              Vector3{lo.x, hi.y, lo.z}, Vector3{hi.x, hi.y, lo.z}, col);
+    draw_quad(Vector3{hi.x, lo.y, hi.z}, Vector3{hi.x, lo.y, lo.z},
+              Vector3{hi.x, hi.y, lo.z}, Vector3{hi.x, hi.y, hi.z}, col);
+    draw_quad(Vector3{lo.x, lo.y, lo.z}, Vector3{lo.x, lo.y, hi.z},
+              Vector3{lo.x, hi.y, hi.z}, Vector3{lo.x, hi.y, lo.z}, col);
+}
+
+// Capped cylinder between two points. The side vertices carry the true surface
+// normal rather than one per facet, so the shader rounds the silhouette off
+// instead of leaving twenty visible flats.
+void draw_cylinder(Vector3 a, Vector3 b, float radius, Color col,
+                   int sides = 20) {
+    Vector3 axis = Vector3Subtract(b, a);
+    const float len = Vector3Length(axis);
+    if (len <= 0.0001f || radius <= 0.0f) return;
+    axis = Vector3Scale(axis, 1.0f / len);
+
+    // Any seed not parallel to the axis gives a usable cross-section frame.
+    const Vector3 seed =
+        (axis.y > 0.9f || axis.y < -0.9f) ? Vector3{1.0f, 0.0f, 0.0f}
+                                          : Vector3{0.0f, 1.0f, 0.0f};
+    const Vector3 u = Vector3Normalize(Vector3CrossProduct(seed, axis));
+    const Vector3 v = Vector3CrossProduct(axis, u);
+
+    auto rim = [&](float t) {
+        return Vector3Add(Vector3Scale(u, cosf(t)), Vector3Scale(v, sinf(t)));
+    };
+
+    for (int i = 0; i < sides; ++i) {
+        const float t0 = 2.0f * PI * i / sides;
+        const float t1 = 2.0f * PI * (i + 1) / sides;
+        const Vector3 n0 = rim(t0);
+        const Vector3 n1 = rim(t1);
+        const Vector3 o0 = Vector3Scale(n0, radius);
+        const Vector3 o1 = Vector3Scale(n1, radius);
+        const Vector3 a0 = Vector3Add(a, o0);
+        const Vector3 a1 = Vector3Add(a, o1);
+        const Vector3 b0 = Vector3Add(b, o0);
+        const Vector3 b1 = Vector3Add(b, o1);
+
+        rlBegin(RL_QUADS);
+        rlColor4ub(col.r, col.g, col.b, col.a);
+        rlTexCoord2f(0.0f, 0.0f);
+        rlNormal3f(n0.x, n0.y, n0.z); rlVertex3f(a0.x, a0.y, a0.z);
+        rlNormal3f(n1.x, n1.y, n1.z); rlVertex3f(a1.x, a1.y, a1.z);
+        rlNormal3f(n1.x, n1.y, n1.z); rlVertex3f(b1.x, b1.y, b1.z);
+        rlNormal3f(n0.x, n0.y, n0.z); rlVertex3f(b0.x, b0.y, b0.z);
+        rlEnd();
+
+        rlBegin(RL_TRIANGLES);
+        rlColor4ub(col.r, col.g, col.b, col.a);
+        rlNormal3f(-axis.x, -axis.y, -axis.z);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a.x, a.y, a.z);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a1.x, a1.y, a1.z);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(a0.x, a0.y, a0.z);
+        rlNormal3f(axis.x, axis.y, axis.z);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(b.x, b.y, b.z);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(b0.x, b0.y, b0.z);
+        rlTexCoord2f(0.0f, 0.0f); rlVertex3f(b1.x, b1.y, b1.z);
+        rlEnd();
+    }
+}
+
+// One cell lying in the well centred at `x`, resting on the tray floor: a dark
+// jacket with a brass label band, a plated flat end, and a nub for the +
+// terminal at the front (+Z) end. The caller sets the material per part, since
+// the can and the plating do not catch the light the same way.
+void draw_battery_cell(float x, const PhongShader& shading) {
+    const float y = tray_floor_y + battery_radius;
+    const float z0 = -battery_length * 0.5f;
+    const float z1 = battery_length * 0.5f;
+    const float r = battery_radius;
+    const Color jacket{44, 46, 54, 255};
+    const Color band{182, 142, 48, 255};
+    const Color plate{158, 161, 170, 255};
+    const Color terminal{212, 210, 202, 255};
+
+    auto at = [x, y](float z) { return Vector3{x, y, z}; };
+
+    shading.set_material(materials::brushed_metal);
+    draw_cylinder(at(z0 + 0.03f), at(z1 - 0.055f), r, jacket);
+
+    shading.set_material(materials::polished_metal);
+    draw_cylinder(at(z0), at(z0 + 0.03f), r * 0.99f, plate);
+    draw_cylinder(at(z0 + 0.10f), at(z1 - 0.12f), r + 0.003f, band);
+    draw_cylinder(at(z1 - 0.055f), at(z1 - 0.015f), r * 0.96f, plate);
+    draw_cylinder(at(z1 - 0.015f), at(z1 + 0.03f), r * 0.34f, terminal);
+}
+
 // Draw a recessed, empty module bay into the currently-bound texture.
 void draw_empty_bay() {
     constexpr int s = module_tex_size;
@@ -190,12 +346,13 @@ void Bomb::setup(std::mt19937& rng, const std::string& serial, int module_count,
     for (auto& panel : info_panels_) {
         const float aspect = panel.quad.half_w / panel.quad.half_h;
         int tw, th;
+        constexpr float base = 256.0f;
         if (aspect >= 1.0f) {
-            th = 128;
-            tw = static_cast<int>(128.0f * aspect);
+            th = static_cast<int>(base);
+            tw = static_cast<int>(base * aspect);
         } else {
-            tw = 128;
-            th = static_cast<int>(128.0f / aspect);
+            tw = static_cast<int>(base);
+            th = static_cast<int>(base / aspect);
         }
         panel.quad.tex = LoadRenderTexture(tw, th);
         panel.quad.tex_valid = true;
@@ -317,11 +474,13 @@ void Bomb::build_info_panels() {
         Vector3{0.0f, -1.0f, 0.0f}, Vector3{1.0f, 0.0f, 0.0f},
         Vector3{0.0f, 0.0f, 1.0f}, half_width, half_thick));
 
-    // Batteries: top rim (full width).
+    // Batteries: the floor of the tray recessed into the top rim. The cells
+    // themselves are drawn in 3D standing in the wells this floor prints.
     info_panels_.push_back(make_panel(
-        WidgetType::BATTERIES, Vector3{0.0f, half_height + eps, 0.0f},
+        WidgetType::BATTERIES,
+        Vector3{tray_center_x, tray_floor_y + 0.004f, 0.0f},
         Vector3{0.0f, 1.0f, 0.0f}, Vector3{1.0f, 0.0f, 0.0f},
-        Vector3{0.0f, 0.0f, -1.0f}, half_width, half_thick));
+        Vector3{0.0f, 0.0f, -1.0f}, tray_half_w, tray_half_d));
 
     // Indicators: right rim (upright, stacked).
     info_panels_.push_back(make_panel(
@@ -362,23 +521,40 @@ void Bomb::draw_info_panel(const InfoPanel& panel) const {
             break;
         }
         case WidgetType::BATTERIES: {
-            const int fs = static_cast<int>(h * 0.22f);
-            DrawText("BATTERIES", 16, (h - fs) / 2, fs, label);
-            const int n = attrs_.battery_count;
-            const int bw = static_cast<int>(h * 0.34f);
-            const int bh = static_cast<int>(h * 0.64f);
-            const int gap = static_cast<int>(h * 0.12f);
-            const int label_w = MeasureText("BATTERIES", fs) + 40;
-            int x = label_w;
-            const int y = (h - bh) / 2;
-            for (int i = 0; i < n; ++i) {
-                DrawRectangle(x, y, bw, bh, Color{70, 74, 84, 255});
-                DrawRectangle(x + bw / 3, y - bh / 8, bw / 3, bh / 8,
-                              Color{70, 74, 84, 255});
-                DrawRectangleLines(x, y, bw, bh, value);
-                x += bw + gap;
+            // The floor of the tray: one well per cell, each with a coil at the
+            // negative end and a flat plate at the positive one. Wells holding a
+            // cell are covered by it in 3D, so this is what an empty one shows.
+            const Color floor_col{32, 33, 39, 255};
+            const Color well_col{11, 12, 15, 255};
+            const Color contact{150, 153, 162, 255};
+            const float fw = static_cast<float>(w);
+            const float fh = static_cast<float>(h);
+            const float well_w = fw * battery_radius / tray_half_w;
+            const float well_h = fh * (battery_length + 0.05f) /
+                                 (2.0f * tray_half_d);
+            DrawRectangle(0, 0, w, h, floor_col);
+            for (int i = 0; i < battery_slot_count; ++i) {
+                const float cx = fw * (battery_slot_offset(i) + tray_half_w) /
+                                 (2.0f * tray_half_w);
+                const float top = (fh - well_h) * 0.5f;
+                DrawRectangleRounded(
+                    Rectangle{cx - well_w * 0.5f, top, well_w, well_h}, 0.35f, 8,
+                    well_col);
+                // Coil at the negative (-Z) end, which is the top of the texture.
+                const float coil_w = well_w * 0.62f;
+                for (int k = 0; k < 4; ++k) {
+                    const float cy = top + well_h * 0.06f + k * fh * 0.055f;
+                    DrawRectangleRec(
+                        Rectangle{cx - coil_w * 0.5f, cy, coil_w, fh * 0.022f},
+                        contact);
+                }
+                // Flat plate at the positive (+Z) end.
+                DrawRectangleRec(
+                    Rectangle{cx - well_w * 0.28f,
+                              top + well_h - fh * 0.10f,
+                              well_w * 0.56f, fh * 0.07f},
+                    contact);
             }
-            if (n == 0) DrawText("- none -", label_w, (h - fs) / 2, fs, label);
             break;
         }
         case WidgetType::INDICATOR: {
@@ -431,22 +607,103 @@ void Bomb::render_module_textures() {
     }
 }
 
-void Bomb::draw_faces_3d() const {
-    // Slab casing.
-    DrawCube(Vector3Zero(), half_width * 2, half_height * 2, half_thick * 2,
-             casing_color(attrs_.color));
+void Bomb::draw_casing(const PhongShader& shading) const {
+    const Color body = casing_color(attrs_.color);
+
+    // Five boxes rather than one cube: a single cube would lay a solid top face
+    // over the battery tray, hiding the recess. Together they are the same slab.
+    shading.set_material(materials::casing);
+    auto box = [](Vector3 lo, Vector3 hi, Color c) {
+        draw_box(lo, hi, c);
+    };
+    box(Vector3{-half_width, -half_height, -half_thick},
+        Vector3{half_width, tray_floor_y, half_thick}, body);
+    box(Vector3{-half_width, tray_floor_y, -half_thick},
+        Vector3{tray_center_x - tray_half_w, half_height, half_thick}, body);
+    box(Vector3{tray_center_x + tray_half_w, tray_floor_y, -half_thick},
+        Vector3{half_width, half_height, half_thick}, body);
+    box(Vector3{tray_center_x - tray_half_w, tray_floor_y, -half_thick},
+        Vector3{tray_center_x + tray_half_w, half_height, -tray_half_d}, body);
+    box(Vector3{tray_center_x - tray_half_w, tray_floor_y, tray_half_d},
+        Vector3{tray_center_x + tray_half_w, half_height, half_thick}, body);
+
+    // The outline is a drawing convention, not a surface: keep the light off it.
+    shading.set_material(materials::unlit);
     DrawCubeWires(Vector3Zero(), half_width * 2, half_height * 2, half_thick * 2,
                   Color{12, 12, 14, 255});
+}
 
-    // Module bays and rim panels (both sides visible; sit just proud of casing).
-    rlDisableBackfaceCulling();
+void Bomb::draw_battery_tray(const PhongShader& shading) const {
+    const Color inner = darken(casing_color(attrs_.color), 0.70f);
+    const Color divider = darken(casing_color(attrs_.color), 0.80f);
+    const float e = 0.002f;   // keep the walls off the casing boxes
+    const float lo_y = tray_floor_y;
+    const float hi_y = half_height;
+
+    // Bind the default (white) texture rather than rlSetTexture(0): that only
+    // records the state, so quads issued after a textured face quad would land
+    // in its draw call and come out multiplied by its top-left texel.
+    rlSetTexture(rlGetTextureIdDefault());
+
+    // The recess is milled out of the casing, so it is the same material; the
+    // interior is tinted down for the shadow the single light cannot cast.
+    shading.set_material(materials::casing);
+
+    // Recess walls, wound so their normals point into the tray.
+    const float xl = tray_center_x - tray_half_w + e;
+    const float xr = tray_center_x + tray_half_w - e;
+    const float zb = -tray_half_d + e;
+    const float zf = tray_half_d - e;
+    draw_quad(Vector3{xl, lo_y, zf}, Vector3{xl, lo_y, zb},
+              Vector3{xl, hi_y, zb}, Vector3{xl, hi_y, zf}, inner);
+    draw_quad(Vector3{xr, lo_y, zb}, Vector3{xr, lo_y, zf},
+              Vector3{xr, hi_y, zf}, Vector3{xr, hi_y, zb}, inner);
+    draw_quad(Vector3{xl, lo_y, zb}, Vector3{xr, lo_y, zb},
+              Vector3{xr, hi_y, zb}, Vector3{xl, hi_y, zb}, inner);
+    draw_quad(Vector3{xr, lo_y, zf}, Vector3{xl, lo_y, zf},
+              Vector3{xl, hi_y, zf}, Vector3{xr, hi_y, zf}, inner);
+
+    // Dividers between the wells, low enough for the cells to nestle between.
+    for (int i = 1; i < battery_slot_count; ++i) {
+        const float x = battery_slot_x(i) - battery_pitch * 0.5f;
+        draw_box(Vector3{x - divider_half_w, lo_y, zb + 0.02f},
+                 Vector3{x + divider_half_w, lo_y + divider_height, zf - 0.02f},
+                 divider);
+    }
+
+    const int cells = attrs_.battery_count < battery_slot_count
+                          ? attrs_.battery_count
+                          : battery_slot_count;
+    for (int i = 0; i < cells; ++i) {
+        draw_battery_cell(battery_slot_x(i), shading);
+    }
+
+    rlSetTexture(0);
+}
+
+void Bomb::draw_faces_3d(const PhongShader& shading) const {
+    draw_casing(shading);
+
+    // Module bays: each face is lit as whatever its components are made of, so
+    // the material comes from the module itself.
     for (const auto& slot : slots_) {
-        if (slot.quad.tex_valid) draw_face_quad(slot.quad);
+        if (!slot.quad.tex_valid) continue;
+        shading.set_material(slot.puzzle ? slot.puzzle->material()
+                                         : materials::matte_plastic);
+        draw_face_quad(slot.quad);
     }
+
+    // Rim panels: printed labels on the casing, except the battery tray floor,
+    // which is machined casing and is lit with the tray around it.
     for (const auto& panel : info_panels_) {
-        if (panel.quad.tex_valid) draw_face_quad(panel.quad);
+        if (!panel.quad.tex_valid) continue;
+        shading.set_material(panel.widget == WidgetType::BATTERIES
+                                 ? materials::casing
+                                 : materials::matte_plastic);
+        draw_face_quad(panel.quad);
     }
-    rlEnableBackfaceCulling();
+
+    draw_battery_tray(shading);
 }
 
 int Bomb::take_strike_events() {

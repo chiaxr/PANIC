@@ -17,6 +17,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A blinking lamp and moulded tuning arrows.
+    SurfaceMaterial material() const override {
+        return materials::glossy_plastic;
+    }
 
 private:
     // Expand the answer word into the on/off pattern the light plays.

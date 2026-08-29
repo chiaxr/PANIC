@@ -27,6 +27,7 @@
 #include "raylib.h"
 
 #include "bomb.h"
+#include "shading.h"
 
 class Game {
 public:
@@ -110,6 +111,8 @@ private:
     Matrix bomb_transform() const;
 
     Bomb bomb_;
+    // Lights the whole 3D pass; the bomb hands it a material per part drawn.
+    PhongShader shading_;
     Camera3D camera_{};
     std::mt19937 rng_;
 

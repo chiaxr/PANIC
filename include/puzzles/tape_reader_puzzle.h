@@ -40,6 +40,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A punched paper tape across the face.
+    SurfaceMaterial material() const override {
+        return materials::paper;
+    }
 
 private:
     // Key index under a module-local pixel; -1 if no key was hit.

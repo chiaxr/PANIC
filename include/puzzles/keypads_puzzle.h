@@ -21,6 +21,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // Four moulded keycaps with lamps.
+    SurfaceMaterial material() const override {
+        return materials::glossy_plastic;
+    }
 
 private:
     int key_at_pixel(Vector2 p) const;

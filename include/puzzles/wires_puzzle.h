@@ -19,6 +19,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A row of insulated wires over the plate.
+    SurfaceMaterial material() const override {
+        return materials::rubber;
+    }
 
 private:
     struct Wire {

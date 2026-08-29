@@ -21,6 +21,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // Translucent domes that light from within.
+    SurfaceMaterial material() const override {
+        return materials::glossy_plastic;
+    }
 
     // The colour to press when `flashed` lights up, for the given bomb state.
     static SimonColor mapped_color(SimonColor flashed, bool serial_has_vowel,

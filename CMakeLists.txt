@@ -46,6 +46,7 @@ FetchContent_MakeAvailable(raylib)
 # ----------------------------------------------------------------------------
 add_library(panic_game STATIC
     src/app.cpp
+    src/shading.cpp
     src/game.cpp
     src/bomb.cpp
     src/puzzles/wires_puzzle.cpp

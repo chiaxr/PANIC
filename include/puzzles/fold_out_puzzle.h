@@ -30,6 +30,10 @@ public:
     void update(const ModuleInput& in, const BombContext& ctx,
                 float dt) override;
     void draw() override;
+    // A printed card net on a lattice.
+    SurfaceMaterial material() const override {
+        return materials::paper;
+    }
 
 private:
     // Lattice index under a module-local pixel; -1 if outside the grid.
