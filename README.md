@@ -235,6 +235,19 @@ Build, then use the **DEBUG** button on the title screen to play the new module 
 otherwise empty bomb, checking a few serials against what the manual says the Expert should be
 telling the Defuser to do.
 
+### 7. Check it
+
+```sh
+python3 scripts/verify_manual.py     # the manual and the C++ hold the same tables
+python3 scripts/verify_puzzles.py    # the tables can always be resolved to one answer
+```
+
+Both take module names to run a single check. If the new module prints a table in the manual, add
+a case to `panic_parse.py` and `verify_manual.py` so the two copies stay tied together;
+`scripts/expert_solver.py` is the Expert's side of the manual on the command line and is worth
+extending too, since it makes play-testing a module a one-liner. `star_chart_catalogue.py` is the
+same idea for Star Chart's constellation geometry.
+
 
 ## Native Build
 
@@ -318,6 +331,12 @@ PANIC/
 |   `-- emscripten_shell.html
 |-- manual/
 |   `-- index.html
+|-- scripts/
+|   |-- panic_parse.py            # reads the tables out of the manual and the C++
+|   |-- verify_manual.py          # diffs the two copies of every printed table
+|   |-- verify_puzzles.py         # feasibility: one answer, always reachable
+|   |-- expert_solver.py          # the manual's rules on the command line
+|   `-- star_chart_catalogue.py   # search and check Star Chart's constellations
 `-- doc/
     `-- panic.png
 ```

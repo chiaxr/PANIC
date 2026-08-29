@@ -1,6 +1,7 @@
 #include "puzzles/wire_sequences_puzzle.h"
 
 #include <algorithm>
+#include <cmath>
 #include <random>
 
 #include "raylib.h"
@@ -43,6 +44,36 @@ float row_centre(int row) {
     return rows_top + row_h * (static_cast<float>(row) + 0.5f);
 }
 
+// Where a wire leaves the left-hand posts and where it lands on the lettered
+// terminals. A wire in row 1 running to terminal C slopes across the panel;
+// the letter beside its right-hand end is the one the manual's table asks for.
+Vector2 wire_start(int row) { return Vector2{wire_left, row_centre(row)}; }
+
+Vector2 wire_end(int connection) {
+    return Vector2{wire_right, row_centre(connection)};
+}
+
+// Distance from a point to the wire's segment, for picking.
+float distance_to_wire(Vector2 p, int row, int connection) {
+    const Vector2 a = wire_start(row);
+    const Vector2 b = wire_end(connection);
+    const float dx = b.x - a.x;
+    const float dy = b.y - a.y;
+    const float len2 = dx * dx + dy * dy;
+    float t = len2 > 0.0f ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2 : 0.0f;
+    t = t < 0.0f ? 0.0f : (t > 1.0f ? 1.0f : t);
+    const float cx = a.x + dx * t - p.x;
+    const float cy = a.y + dy * t - p.y;
+    return std::sqrt(cx * cx + cy * cy);
+}
+
+// The point a fraction of the way along a wire, for drawing the cut stubs.
+Vector2 wire_point(int row, int connection, float t) {
+    const Vector2 a = wire_start(row);
+    const Vector2 b = wire_end(connection);
+    return Vector2{a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t};
+}
+
 Color sequence_color(WireSequencesPuzzle::SeqColor c) {
     switch (c) {
         case WireSequencesPuzzle::SeqColor::SEQ_RED:
@@ -64,17 +95,26 @@ void WireSequencesPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
 
     int seen[3] = {0, 0, 0};
     for (int p = 0; p < panel_count; ++p) {
-        // Each panel carries one to three wires.
+        // Each panel carries one to three wires, in a random pick of the rows.
         const int wires_here = std::uniform_int_distribution<int>(1, 3)(rng);
         std::array<int, rows_per_panel> rows{0, 1, 2};
         std::shuffle(rows.begin(), rows.end(), rng);
 
+        auto& panel = panels_[static_cast<size_t>(p)];
         for (int i = 0; i < wires_here; ++i) {
-            Wire& w = panels_[static_cast<size_t>(p)]
-                             [static_cast<size_t>(rows[static_cast<size_t>(i)])];
+            Wire& w = panel[static_cast<size_t>(rows[static_cast<size_t>(i)])];
             w.present = true;
             w.color = static_cast<SeqColor>(pick_color(rng));
             w.connection = pick_conn(rng);
+        }
+
+        // Occurrences are numbered in the order the Defuser reads the panel out
+        // -- top to bottom -- because that is the order the manual's running
+        // count assumes. Numbering them as the wires were dealt would put the
+        // two out of step whenever one panel carries two wires of a colour.
+        for (int r = 0; r < rows_per_panel; ++r) {
+            Wire& w = panel[static_cast<size_t>(r)];
+            if (!w.present) continue;
 
             const int ci = static_cast<int>(w.color);
             if (seen[ci] >= max_occurrences) {
@@ -96,16 +136,22 @@ void WireSequencesPuzzle::init(const BombAttributes& attrs, std::mt19937& rng) {
 
 int WireSequencesPuzzle::wire_at_pixel(Vector2 p) const {
     if (p.x < wire_left - 40.0f || p.x > wire_right + 40.0f) return -1;
+
+    // Wires run diagonally, so a row band is not enough: pick whichever wire
+    // the tap actually landed on.
+    int best = -1;
+    float best_dist = row_h * 0.5f;
     for (int r = 0; r < rows_per_panel; ++r) {
-        const float cy = row_centre(r);
-        if (p.y >= cy - row_h * 0.5f && p.y <= cy + row_h * 0.5f) {
-            return panels_[static_cast<size_t>(panel_)][static_cast<size_t>(r)]
-                           .present
-                       ? r
-                       : -1;
+        const Wire& w =
+            panels_[static_cast<size_t>(panel_)][static_cast<size_t>(r)];
+        if (!w.present) continue;
+        const float away = distance_to_wire(p, r, w.connection);
+        if (away < best_dist) {
+            best_dist = away;
+            best = r;
         }
     }
-    return -1;
+    return best;
 }
 
 void WireSequencesPuzzle::update(const ModuleInput& in, const BombContext& ctx,
@@ -169,20 +215,19 @@ void WireSequencesPuzzle::draw() {
 
         if (!w.present) continue;
 
+        // The wire slopes from its own row to the terminal it is wired to, so
+        // the letter the Defuser reads out is the one the table asks about.
         const Color col = sequence_color(w.color);
+        const Vector2 a = wire_start(r);
+        const Vector2 b = wire_end(w.connection);
         if (!w.cut) {
-            DrawRectangleRec(Rectangle{wire_left, cy - wire_thickness * 0.5f,
-                                       wire_right - wire_left, wire_thickness},
-                             col);
+            DrawLineEx(a, b, wire_thickness, col);
         } else {
-            const float mid = (wire_left + wire_right) * 0.5f;
-            DrawRectangleRec(Rectangle{wire_left, cy - wire_thickness * 0.5f,
-                                       mid - wire_left - 26.0f, wire_thickness},
-                             Fade(col, 0.55f));
-            DrawRectangleRec(
-                Rectangle{mid + 26.0f, cy - wire_thickness * 0.5f + 8.0f,
-                          wire_right - mid - 26.0f, wire_thickness},
-                Fade(col, 0.55f));
+            DrawLineEx(a, wire_point(r, w.connection, 0.44f), wire_thickness,
+                       Fade(col, 0.55f));
+            const Vector2 stub = wire_point(r, w.connection, 0.56f);
+            DrawLineEx(Vector2{stub.x, stub.y + 8.0f}, b, wire_thickness,
+                       Fade(col, 0.55f));
         }
     }
 

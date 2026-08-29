@@ -151,12 +151,6 @@ void MazePuzzle::draw() {
                    Color{46, 48, 56, 255});
     }
 
-    // Marker circles: these name the maze for the Expert.
-    const MarkerPair& m = markers[maze_index_];
-    const Color marker = Color{90, 200, 250, 255};
-    DrawCircleV(cell_centre(m.r0, m.c0), 13.0f, marker);
-    DrawCircleV(cell_centre(m.r1, m.c1), 13.0f, marker);
-
     // Target triangle, then the player square on top.
     const Vector2 t = cell_centre(target_.row, target_.col);
     DrawTriangle(Vector2{t.x - 15.0f, t.y + 13.0f},
@@ -166,6 +160,22 @@ void MazePuzzle::draw() {
     const Vector2 p = cell_centre(player_.row, player_.col);
     DrawRectangle(static_cast<int>(p.x) - 11, static_cast<int>(p.y) - 11, 22, 22,
                   Color{240, 240, 246, 255});
+
+    // Marker circles last: these name the maze for the Expert, and the player
+    // or the goal can share a cell with one. Drawn underneath they would be
+    // all but covered, and an unreadable pair names no maze at all. The ring
+    // keeps the piece beneath it visible.
+    const MarkerPair& m = markers[maze_index_];
+    const Color marker = Color{90, 200, 250, 255};
+    for (const Cell& c : {Cell{m.r0, m.c0}, Cell{m.r1, m.c1}}) {
+        const Vector2 centre = cell_centre(c.row, c.col);
+        if ((c.row == player_.row && c.col == player_.col) ||
+                (c.row == target_.row && c.col == target_.col)) {
+            DrawRing(centre, 15.0f, 20.0f, 0.0f, 360.0f, 32, marker);
+        } else {
+            DrawCircleV(centre, 13.0f, marker);
+        }
+    }
 
     // Direction pad.
     const Color face = Color{48, 50, 58, 255};

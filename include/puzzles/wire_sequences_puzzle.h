@@ -27,7 +27,10 @@ private:
     struct Wire {
         bool present = false;
         SeqColor color = SeqColor::SEQ_RED;
-        int connection = 0;   // 0 = A, 1 = B, 2 = C
+        // Which lettered terminal the wire runs to: 0 = A, 1 = B, 2 = C. The
+        // wire is drawn sloping to that terminal, so it is what the Defuser
+        // reads out and what the manual's occurrence table asks about.
+        int connection = 0;
         int occurrence = 1;   // which wire of this colour it is, 1-based
         bool cut = false;
         bool should_cut = false;

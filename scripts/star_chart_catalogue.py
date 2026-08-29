@@ -751,6 +751,18 @@ def cmd_search(argv):
             print("// %s -- no candidate found" % name)
     return 0
 
+def figures_markup(names=None):
+    """The manual's <figure> markup for the whole catalogue, in order.
+
+    verify_manual.py diffs this against what manual/index.html actually prints,
+    so the drawings can never drift from the coordinates the module uses.
+    """
+    cat = {c["name"]: c for c in load_catalogue()}
+    return [svg_figure(n, cat[n]["pts"], cat[n]["tiers"], cat[n]["odd"],
+                       cat[n]["even"])
+            for n in (names or list(cat))]
+
+
 def cmd_figures(argv):
     cat = {c["name"]: c for c in load_catalogue()}
     for name in (argv or list(cat)):

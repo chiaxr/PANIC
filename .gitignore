@@ -21,6 +21,10 @@ _deps/
 PANIC
 panic_web
 
+# Python tooling in scripts/
+__pycache__/
+*.pyc
+
 # Editor / OS
 .DS_Store
 .vscode/
