@@ -56,6 +56,8 @@ private:
     // Title-screen serial entry and difficulty slider.
     void update_serial_entry();
     void update_difficulty_slider();
+    // Keeps the highlighted module inside the picker's viewport.
+    void scroll_debug_entry_into_view();
     void randomize_serial();
     bool serial_is_valid() const;
     // Build the bomb from the current serial and difficulty.
@@ -165,6 +167,9 @@ private:
     int debug_selected_idx_ = 0;
     bool debug_ui_press_ = false;   // a press that started on a debug button
     int debug_press_idx_ = -1;
+    // How far the module list is scrolled, in pixels. The template pool
+    // outgrew the panel, so the picker's body scrolls.
+    float debug_scroll_ = 0.0f;
 
     // The run's seed. The serial the players type, together with the module
     // count, seeds everything about the bomb, so the same pair always replays

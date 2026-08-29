@@ -131,6 +131,11 @@ constexpr int debug_seed_h = 44;
 constexpr int debug_roll_w = 130;
 constexpr int debug_seed_gap = 12;
 constexpr int debug_body_top = 146;
+// The list outgrew the panel once the template pool passed a dozen entries, so
+// the body is a scrolling viewport between the seed row and the footer block.
+constexpr int debug_body_bottom_pad = dialog_footer_block_h + 40;
+constexpr float debug_scroll_step = 54.0f;   // one entry and its gap
+constexpr int debug_scrollbar_w = 6;
 constexpr int debug_btn_w = 240;
 constexpr int debug_btn_h = 44;
 constexpr int debug_btn_gap = 20;
@@ -330,15 +335,51 @@ int debug_grid_rows(int count) {
     return (count + debug_cols - 1) / debug_cols;
 }
 
-Rectangle debug_entry_rect(int idx, const DialogLayout& l, int rows) {
+// The window the list is seen through. Everything outside it is clipped away.
+Rectangle debug_viewport_rect(const DialogLayout& l) {
+    return Rectangle{
+        static_cast<float>(l.bx + instr_body_x_pad),
+        static_cast<float>(l.by + debug_body_top),
+        static_cast<float>(l.bw - instr_body_x_pad * 2),
+        static_cast<float>(l.bh - debug_body_top - debug_body_bottom_pad)};
+}
+
+int debug_row_pitch() { return debug_entry_h + debug_entry_gap_y; }
+
+int debug_content_h(int rows) {
+    if (rows <= 0) return 0;
+    return rows * debug_entry_h + (rows - 1) * debug_entry_gap_y;
+}
+
+float debug_max_scroll(const DialogLayout& l, int rows) {
+    const float over = static_cast<float>(debug_content_h(rows)) -
+                       debug_viewport_rect(l).height;
+    return over > 0.0f ? over : 0.0f;
+}
+
+Rectangle debug_entry_rect(int idx, const DialogLayout& l, int rows,
+                           float scroll) {
     const int col = rows > 0 ? idx / rows : 0;
     const int row = rows > 0 ? idx % rows : 0;
     const int w = (l.bw - instr_body_x_pad * 2 -
                    debug_entry_gap_x * (debug_cols - 1)) / debug_cols;
     const int x = l.bx + instr_body_x_pad + col * (w + debug_entry_gap_x);
-    const int y = l.by + debug_body_top + row * (debug_entry_h + debug_entry_gap_y);
-    return Rectangle{static_cast<float>(x), static_cast<float>(y),
+    const int y = l.by + debug_body_top + row * debug_row_pitch();
+    return Rectangle{static_cast<float>(x), static_cast<float>(y) - scroll,
                      static_cast<float>(w), static_cast<float>(debug_entry_h)};
+}
+
+// An entry scrolled out of the viewport is only half drawn, so hover and click
+// tests run against the part still on screen. A fully clipped entry ends up
+// with no height and answers nothing.
+Rectangle clip_to_viewport(Rectangle r, const Rectangle& view) {
+    const float top = r.y > view.y ? r.y : view.y;
+    const float view_bottom = view.y + view.height;
+    const float bottom =
+        (r.y + r.height) < view_bottom ? (r.y + r.height) : view_bottom;
+    r.y = top;
+    r.height = bottom > top ? bottom - top : 0.0f;
+    return r;
 }
 
 // The debug round's own buttons, sat above the controls hint.
@@ -774,6 +815,7 @@ void Game::leave_debug() {
     press_slot_ = -1;
 
     state_ = State::DEBUG_MENU;
+    scroll_debug_entry_into_view();
 }
 
 void Game::update_debug_menu() {
@@ -781,6 +823,18 @@ void Game::update_debug_menu() {
         debug_menu_layout(GetScreenWidth(), GetScreenHeight());
     const int count = static_cast<int>(debug_modules_.size());
     const int rows = debug_grid_rows(count);
+    const Rectangle view = debug_viewport_rect(l);
+    const float max_scroll = debug_max_scroll(l, rows);
+
+    // Scrolling the list. The wheel and a drag inside the viewport both work,
+    // so the picker behaves the same with a mouse and with a finger. This runs
+    // before consume_tap, which is what advances last_pos_.
+    debug_scroll_ -= GetMouseWheelMove() * debug_scroll_step;
+    if (pointer_down() && pointer_down_ &&
+            CheckCollisionPointRec(press_pos_, view)) {
+        debug_scroll_ -= pointer_pos().y - last_pos_.y;
+    }
+    debug_scroll_ = Clamp(debug_scroll_, 0.0f, max_scroll);
 
     // The seed box is the same control the title screen has, editing the same
     // serial: a debug round is built from a seed like any other round.
@@ -804,10 +858,15 @@ void Game::update_debug_menu() {
         if (IsKeyPressed(KEY_LEFT)) {
             debug_selected_idx_ = (debug_selected_idx_ - rows + count) % count;
         }
+        if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_UP) ||
+                IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_LEFT)) {
+            scroll_debug_entry_into_view();
+        }
         for (int i = 0; i < count; ++i) {
-            if (rect_hovered(debug_entry_rect(i, l, rows))) {
-                debug_selected_idx_ = i;
-            }
+            const Rectangle hit =
+                clip_to_viewport(debug_entry_rect(i, l, rows, debug_scroll_),
+                                 view);
+            if (hit.height > 0.0f && rect_hovered(hit)) debug_selected_idx_ = i;
         }
         // A serial that no bomb can be built from is refused here, exactly as
         // START refuses it on the title screen.
@@ -844,11 +903,29 @@ void Game::update_debug_menu() {
 
     if (!serial_is_valid()) return;
     for (int i = 0; i < count; ++i) {
-        if (CheckCollisionPointRec(tap, debug_entry_rect(i, l, rows))) {
+        const Rectangle hit = clip_to_viewport(
+            debug_entry_rect(i, l, rows, debug_scroll_), view);
+        if (hit.height > 0.0f && CheckCollisionPointRec(tap, hit)) {
             start_debug_round(debug_modules_[i]);
             return;
         }
     }
+}
+
+void Game::scroll_debug_entry_into_view() {
+    const DialogLayout l =
+        debug_menu_layout(GetScreenWidth(), GetScreenHeight());
+    const int rows = debug_grid_rows(static_cast<int>(debug_modules_.size()));
+    if (rows <= 0) return;
+
+    const float height = debug_viewport_rect(l).height;
+    const float top =
+        static_cast<float>((debug_selected_idx_ % rows) * debug_row_pitch());
+    const float bottom = top + static_cast<float>(debug_entry_h);
+
+    if (top < debug_scroll_) debug_scroll_ = top;
+    if (bottom > debug_scroll_ + height) debug_scroll_ = bottom - height;
+    debug_scroll_ = Clamp(debug_scroll_, 0.0f, debug_max_scroll(l, rows));
 }
 
 bool Game::update_debug_controls() {
@@ -983,6 +1060,7 @@ void Game::update_menu() {
 
     if (CheckCollisionPointRec(tap, debug_corner_rect(sw, sh))) {
         debug_selected_idx_ = 0;
+        debug_scroll_ = 0.0f;
         state_ = State::DEBUG_MENU;
         return;
     }
@@ -1395,12 +1473,39 @@ void Game::draw_debug_menu() const {
     // ---- the modules ----
     const int count = static_cast<int>(debug_modules_.size());
     const int rows = debug_grid_rows(count);
+    const Rectangle view = debug_viewport_rect(l);
+    const float max_scroll = debug_max_scroll(l, rows);
+
+    // The list is taller than the panel, so it is drawn through a window and
+    // whatever falls outside is clipped rather than spilling over the footer.
+    BeginScissorMode(static_cast<int>(view.x), static_cast<int>(view.y),
+                     static_cast<int>(view.width),
+                     static_cast<int>(view.height));
     for (int i = 0; i < count; ++i) {
-        const Rectangle r = debug_entry_rect(i, l, rows);
+        const Rectangle r = debug_entry_rect(i, l, rows, debug_scroll_);
+        if (r.y + r.height < view.y || r.y > view.y + view.height) continue;
         // An unusable serial builds nothing, so nothing lights up either.
         draw_list_entry(debug_modules_[static_cast<size_t>(i)].c_str(),
                         debug_needy_[static_cast<size_t>(i)] ? "NEEDY" : nullptr,
                         r, valid && button_lit(i, debug_selected_idx_, r));
+    }
+    EndScissorMode();
+
+    if (max_scroll > 0.0f) {
+        // A slim track down the right-hand gutter, so it is obvious there is
+        // more list than the panel is showing.
+        const float x = view.x + view.width + 10.0f;
+        DrawRectangleRounded(
+            Rectangle{x, view.y, static_cast<float>(debug_scrollbar_w),
+                      view.height},
+            0.5f, 4, Color{40, 42, 50, 220});
+        const float span = static_cast<float>(debug_content_h(rows));
+        const float thumb_h = view.height * (view.height / span);
+        const float travel = view.height - thumb_h;
+        const float y = view.y + travel * (debug_scroll_ / max_scroll);
+        DrawRectangleRounded(
+            Rectangle{x, y, static_cast<float>(debug_scrollbar_w), thumb_h},
+            0.5f, 4, Color{120, 126, 140, 235});
     }
 
     if (!valid) {
