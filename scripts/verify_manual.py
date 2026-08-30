@@ -338,6 +338,29 @@ def star_chart_geometry():
              "star_chart_catalogue.py verify failed:\n" + result.stdout[-2000:])
 
 
+@check("color-match")
+def color_match():
+    """The manual's patches must be the colours the module actually draws."""
+    keys, grid = P.color_match_manual()
+    src_keys, columns, hexes = P.color_match_source()
+    if not compare("color-match", "key words", keys, src_keys):
+        return
+    expected = [[hexes[col[k]] for col in columns] for k in range(len(keys))]
+    compare("color-match", "patch grid", grid, expected)
+
+
+@check("color-match-palette")
+def color_match_palette():
+    """Defer to the palette script's own colour-space checks."""
+    result = subprocess.run(
+        [sys.executable, os.path.join(ROOT, "scripts", "color_palette.py"),
+         "verify"],
+        capture_output=True, text=True, cwd=ROOT)
+    if result.returncode != 0:
+        fail("color-match-palette",
+             "color_palette.py verify failed:\n" + result.stdout[-2000:])
+
+
 @check("registry")
 def registry():
     """Every module in the manual's contents is in the bomb's template pool."""

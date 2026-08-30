@@ -24,6 +24,7 @@ Run any subcommand with -h for its arguments.
 """
 
 import argparse
+import math
 import os
 import sys
 
@@ -411,6 +412,67 @@ def cmd_starchart(args):
     return 0
 
 
+# --- Colour Match -----------------------------------------------------------
+# The manual deliberately names none of its patches, so this reads the printed
+# hex back and puts words to it. The words are derived, not authored: a second
+# hand-kept table of colour names would be one more thing to drift.
+HUE_NAMES = (
+    (20.0, "a crimson pink -- red with the pink side showing"),
+    (45.0, "a strong red, barely orange"),
+    (72.0, "orange"),
+    (100.0, "gold, an orange-yellow"),
+    (125.0, "yellow"),
+    (160.0, "green"),
+    (185.0, "a blue-green, mint or jade"),
+    (215.0, "cyan, green-blue"),
+    (240.0, "a sky blue"),
+    (280.0, "blue"),
+    (320.0, "violet, blue with red in it"),
+    (360.0, "a purple-pink"),
+)
+
+
+def describe(hex_colour):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import color_palette as CP
+    rgb = [int(hex_colour[i:i + 2], 16) for i in (1, 3, 5)]
+    lightness, a, b = CP.lin_to_oklab(*CP.rgb8_to_lin(rgb))
+    hue = math.degrees(math.atan2(b, a)) % 360.0
+    chroma = math.hypot(a, b)
+    name = next(text for limit, text in HUE_NAMES if hue < limit)
+    if chroma < 0.09:
+        strength = "washed out -- close to the middle of the wheel"
+    elif chroma < 0.15:
+        strength = "clearly coloured, but not full strength"
+    else:
+        strength = "full strength, right out at the rim"
+    if lightness < 0.55:
+        tone = "dark"
+    elif lightness < 0.78:
+        tone = "mid-toned"
+    else:
+        tone = "light"
+    return name, strength, tone, hue, chroma, lightness
+
+
+def cmd_colormatch(args):
+    keys, grid = P.color_match_manual()
+    column = 0 if args.batteries <= 1 else (1 if args.batteries <= 3 else 2)
+    key = args.key.upper()
+    if key not in keys:
+        raise SystemExit("keys are %s" % ", ".join(keys))
+    hex_colour = grid[keys.index(key)][column]
+    name, strength, tone, hue, chroma, lightness = describe(hex_colour)
+    print("%s with %d batteries -> column %d, patch %s"
+          % (key, args.batteries, column + 1, hex_colour))
+    print("    hue        %s" % name)
+    print("    strength   %s" % strength)
+    print("    lightness  %s" % tone)
+    print("    (Oklab hue %.0f deg, chroma %.3f, lightness %.2f)"
+          % (hue, chroma, lightness))
+    return 0
+
+
 def main(argv):
     ap = argparse.ArgumentParser(
         description=__doc__,
@@ -498,6 +560,11 @@ def main(argv):
     p.add_argument("--lit", type=int, default=0, help="lit indicator count")
     p.add_argument("--plate")
     p.set_defaults(fn=cmd_pipeworks)
+
+    p = sub.add_parser("colormatch", help="describe the key's colour")
+    p.add_argument("--key", required=True, help="the key word on the module")
+    p.add_argument("--batteries", type=int, required=True)
+    p.set_defaults(fn=cmd_colormatch)
 
     p = sub.add_parser("starchart", help="name the constellation")
     p.add_argument("--stars", type=int, required=True)

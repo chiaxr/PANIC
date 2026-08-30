@@ -47,6 +47,7 @@ A bomb fills as many bays as the difficulty asks for, drawn at random without re
 | Tape Reader | Executes a printed program by hand and types the result |
 | Pipeworks | Rotates pipe tiles to route flow to an outlet only the Expert knows |
 | Star Chart | Identifies a rotated constellation and presses the star it names |
+| Colour Match | Finds a colour the Expert can only describe, on an Oklab colour wheel |
 
 At difficulty 3 and above, up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not
 counted in the module total — they wake up periodically for the whole round and demand attention:
@@ -254,7 +255,10 @@ Both take module names to run a single check. If the new module prints a table i
 a case to `panic_parse.py` and `verify_manual.py` so the two copies stay tied together;
 `scripts/expert_solver.py` is the Expert's side of the manual on the command line and is worth
 extending too, since it makes play-testing a module a one-liner. `star_chart_catalogue.py` is the
-same idea for Star Chart's constellation geometry.
+same idea for Star Chart's constellation geometry, and `color_palette.py` for Colour Match's
+colour wheel -- it builds the wheel from the sRGB gamut cusp in Oklab, searches for a palette
+that stays apart both in colour and in aiming distance on the wheel, and reports how much of
+that separation survives colour blindness.
 
 
 ## Native Build
@@ -344,7 +348,8 @@ PANIC/
 |   |-- verify_manual.py          # diffs the two copies of every printed table
 |   |-- verify_puzzles.py         # feasibility: one answer, always reachable
 |   |-- expert_solver.py          # the manual's rules on the command line
-|   `-- star_chart_catalogue.py   # search and check Star Chart's constellations
+|   |-- star_chart_catalogue.py   # search and check Star Chart's constellations
+|   `-- color_palette.py          # search and check Colour Match's Oklab wheel
 `-- doc/
     `-- panic.png
 ```

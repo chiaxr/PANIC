@@ -12,6 +12,7 @@
 
 #include "puzzles/button_puzzle.h"
 #include "puzzles/capacitor_puzzle.h"
+#include "puzzles/color_match_puzzle.h"
 #include "puzzles/complicated_wires_puzzle.h"
 #include "puzzles/fold_out_puzzle.h"
 #include "puzzles/keypads_puzzle.h"
@@ -69,6 +70,8 @@ void register_builtin_puzzles() {
             [] { return std::unique_ptr<Puzzle>(new PipeworksPuzzle()); });
     reg.add("Star Chart",
             [] { return std::unique_ptr<Puzzle>(new StarChartPuzzle()); });
+    reg.add("Colour Match",
+            [] { return std::unique_ptr<Puzzle>(new ColorMatchPuzzle()); });
     reg.add("Venting Gas",
             [] { return std::unique_ptr<Puzzle>(new VentingGasPuzzle()); });
     reg.add("Capacitor Discharge",
@@ -120,7 +123,7 @@ constexpr float battery_slot_x(int i) {
 // Every module template that can appear on a bomb, in a fixed order: bomb
 // generation shuffles this, and PuzzleRegistry::names() cannot be used for it
 // because an unordered_map's order is not reproducible from the bomb's seed.
-constexpr std::array<const char*, 18> module_templates = {
+constexpr std::array<const char*, 19> module_templates = {
     "Wires",
     "The Button",
     "Keypads",
@@ -136,6 +139,7 @@ constexpr std::array<const char*, 18> module_templates = {
     "Tape Reader",
     "Pipeworks",
     "Star Chart",
+    "Colour Match",
     "Venting Gas",
     "Capacitor Discharge",
     "Knobs",

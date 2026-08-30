@@ -292,6 +292,34 @@
         .red { background: #d44040; } .blue { background: #4870dc; }
         .yellow { background: #e8d048; } .white { background: #ececf0; }
         .black { background: #222228; } .green { background: #3f8f52; }
+        /* Colour Match patches. Literal hex, identical in both themes: the
+           Defuser is matching these on a screen of their own, so a theme that
+           shifted them would put the two players on different colours. The
+           grey cell is deliberate -- the module's preview sits on the same
+           neutral, and a patch on a dark ground reads lighter and more
+           saturated than the same patch on parchment. */
+        .chip {
+            display: block; width: 100%; height: 34px;
+            border: 1px solid var(--ink);
+        }
+        td.chipcell { background: #8a8a8a; padding: 6px; width: 22%; }
+        tr:nth-child(even) td.chipcell { background: #8a8a8a; }
+        .cm1  { background: #E94775; }
+        .cm2  { background: #EA4A35; }
+        .cm3  { background: #FD880C; }
+        .cm4  { background: #C59060; }
+        .cm5  { background: #FCC400; }
+        .cm6  { background: #CBC968; }
+        .cm7  { background: #F7FE36; }
+        .cm8  { background: #82C284; }
+        .cm9  { background: #4DF593; }
+        .cm10 { background: #59E0BB; }
+        .cm11 { background: #03FBFF; }
+        .cm12 { background: #05CAFE; }
+        .cm13 { background: #4F97D5; }
+        .cm14 { background: #2646C5; }
+        .cm15 { background: #7662B8; }
+        .cm16 { background: #BF7097; }
         .sym {
             font-family: 'Roboto Mono', 'Courier New', monospace; font-weight: 700;
             font-size: 1.35rem; letter-spacing: 0.18em;
@@ -418,6 +446,7 @@
                 <li><a href="#tape-reader">Tape Reader</a></li>
                 <li><a href="#pipeworks">Pipeworks</a></li>
                 <li><a href="#star-chart">Star Chart</a></li>
+                <li><a href="#color-match">Colour Match</a></li>
                 <li><a href="#venting-gas">Venting Gas (needy)</a></li>
                 <li><a href="#capacitor">Capacitor Discharge (needy)</a></li>
                 <li><a href="#knobs">Knobs (needy)</a></li>
@@ -1078,6 +1107,53 @@
                 <figure><figcaption>The Crown</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Crown"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="74.8" cy="126.8" r="7.0"/><circle class="st" cx="93.4" cy="66.8" r="7.0"/><circle class="st" cx="136.1" cy="112.9" r="7.0"/><circle class="st" cx="123.3" cy="86.8" r="4.5"/><circle class="r1" cx="103.5" cy="117.3" r="13"/><circle class="st" cx="103.5" cy="117.3" r="4.5"/><circle class="st" cx="87.6" cy="85.5" r="4.5"/><circle class="st" cx="116.8" cy="137.3" r="2.5"/><circle class="r2" cx="64.6" cy="66.6" r="13"/><circle class="st" cx="64.6" cy="66.6" r="2.5"/></svg></figure>
                 <figure><figcaption>The Furnace</figcaption><svg viewBox="0 0 200 200" width="190" height="190" role="img" aria-label="The Furnace"><line class="gr" x1="50" y1="0" x2="50" y2="200"/><line class="gr" x1="0" y1="50" x2="200" y2="50"/><line class="gr" x1="100" y1="0" x2="100" y2="200"/><line class="gr" x1="0" y1="100" x2="200" y2="100"/><line class="gr" x1="150" y1="0" x2="150" y2="200"/><line class="gr" x1="0" y1="150" x2="200" y2="150"/><circle class="st" cx="91.9" cy="95.6" r="7.0"/><circle class="st" cx="104.1" cy="110.6" r="7.0"/><circle class="st" cx="73.1" cy="110.5" r="7.0"/><circle class="st" cx="99.9" cy="69.5" r="4.5"/><circle class="r1" cx="88.5" cy="123.3" r="13"/><circle class="st" cx="88.5" cy="123.3" r="4.5"/><circle class="st" cx="120.7" cy="83.3" r="2.5"/><circle class="st" cx="84.9" cy="148.4" r="4.5"/><circle class="r2" cx="137.0" cy="58.9" r="13"/><circle class="st" cx="137.0" cy="58.9" r="2.5"/></svg></figure>
             </div>
+        </section>
+
+        <section id="color-match">
+            <h2>Module &mdash; Colour Match</h2>
+            <p class="lead">A key word, a colour wheel and a SUBMIT button. The table below gives
+            the colour that key stands for &mdash; but it does not name it. Describing it is your
+            job.</p>
+
+            <div class="note">Ask the Defuser for the <strong>key word</strong> and the
+            <strong>battery count</strong>. Find the key's row, read the patch in the column its
+            battery count picks, and <strong>describe that colour</strong>. The Defuser drags the
+            crosshair on the wheel &mdash; hue around, washed-out at the middle to vivid at the rim
+            &mdash; watches the PICKED swatch, and presses <span class="k">SUBMIT</span>. Two keys
+            in a row disarms the module.</div>
+
+            <div class="note">You do not have to be exact. The module accepts any pick that is
+            <strong>closer to this patch than to any other patch in the table</strong> &mdash; about
+            a sixth of the wheel's radius in every direction.</div>
+
+            <div class="note warn">A wrong colour is a strike, and <strong>both keys are
+            re-drawn</strong> &mdash; you will have to look the module up again from the start, so
+            describe carefully rather than guessing.</div>
+
+            <div class="note warn">Colour blindness. Most of this palette survives it &mdash; the
+            colours differ in lightness as well as hue, which is what a colour-blind viewer reads
+            them by. Two pairs are the exception: the mid greens are hard to separate under
+            tritanopia.</div>
+
+            <table>
+                <tr><th>Key</th><th>0&ndash;1 batteries</th><th>2&ndash;3 batteries</th><th>4 batteries</th></tr>
+                <tr><td class="k">ANVIL</td><td class="chipcell"><span class="chip cm1"></span></td><td class="chipcell"><span class="chip cm14"></span></td><td class="chipcell"><span class="chip cm12"></span></td></tr>
+                <tr><td class="k">BUREAU</td><td class="chipcell"><span class="chip cm2"></span></td><td class="chipcell"><span class="chip cm5"></span></td><td class="chipcell"><span class="chip cm10"></span></td></tr>
+                <tr><td class="k">CIPHER</td><td class="chipcell"><span class="chip cm3"></span></td><td class="chipcell"><span class="chip cm6"></span></td><td class="chipcell"><span class="chip cm8"></span></td></tr>
+                <tr><td class="k">DELTA</td><td class="chipcell"><span class="chip cm4"></span></td><td class="chipcell"><span class="chip cm3"></span></td><td class="chipcell"><span class="chip cm16"></span></td></tr>
+                <tr><td class="k">ENVOY</td><td class="chipcell"><span class="chip cm5"></span></td><td class="chipcell"><span class="chip cm12"></span></td><td class="chipcell"><span class="chip cm3"></span></td></tr>
+                <tr><td class="k">FULCRUM</td><td class="chipcell"><span class="chip cm6"></span></td><td class="chipcell"><span class="chip cm7"></span></td><td class="chipcell"><span class="chip cm4"></span></td></tr>
+                <tr><td class="k">GAZEBO</td><td class="chipcell"><span class="chip cm7"></span></td><td class="chipcell"><span class="chip cm13"></span></td><td class="chipcell"><span class="chip cm14"></span></td></tr>
+                <tr><td class="k">HAVEN</td><td class="chipcell"><span class="chip cm8"></span></td><td class="chipcell"><span class="chip cm9"></span></td><td class="chipcell"><span class="chip cm1"></span></td></tr>
+                <tr><td class="k">INDEX</td><td class="chipcell"><span class="chip cm9"></span></td><td class="chipcell"><span class="chip cm10"></span></td><td class="chipcell"><span class="chip cm5"></span></td></tr>
+                <tr><td class="k">JIGSAW</td><td class="chipcell"><span class="chip cm10"></span></td><td class="chipcell"><span class="chip cm15"></span></td><td class="chipcell"><span class="chip cm11"></span></td></tr>
+                <tr><td class="k">KESTREL</td><td class="chipcell"><span class="chip cm11"></span></td><td class="chipcell"><span class="chip cm8"></span></td><td class="chipcell"><span class="chip cm2"></span></td></tr>
+                <tr><td class="k">LEDGER</td><td class="chipcell"><span class="chip cm12"></span></td><td class="chipcell"><span class="chip cm16"></span></td><td class="chipcell"><span class="chip cm6"></span></td></tr>
+                <tr><td class="k">MASON</td><td class="chipcell"><span class="chip cm13"></span></td><td class="chipcell"><span class="chip cm4"></span></td><td class="chipcell"><span class="chip cm9"></span></td></tr>
+                <tr><td class="k">NOMAD</td><td class="chipcell"><span class="chip cm14"></span></td><td class="chipcell"><span class="chip cm1"></span></td><td class="chipcell"><span class="chip cm15"></span></td></tr>
+                <tr><td class="k">ORBIT</td><td class="chipcell"><span class="chip cm15"></span></td><td class="chipcell"><span class="chip cm2"></span></td><td class="chipcell"><span class="chip cm7"></span></td></tr>
+                <tr><td class="k">PLINTH</td><td class="chipcell"><span class="chip cm16"></span></td><td class="chipcell"><span class="chip cm11"></span></td><td class="chipcell"><span class="chip cm13"></span></td></tr>
+            </table>
         </section>
 
         <section id="venting-gas">

@@ -432,3 +432,40 @@ def star_chart_figures_manual():
     frag = section(manual_html(), "star-chart")
     return [f.strip() for f in
             re.findall(r"(<figure><figcaption>The .*?</figure>)", frag, re.S)]
+
+
+# --- Colour Match -----------------------------------------------------------
+def color_match_manual():
+    """(key words in row order, per-row column hexes) from the printed grid.
+
+    The patches are unnamed by design, so the only thing to compare against the
+    C++ is the colour itself: the chip's class names a background rule in the
+    manual's own stylesheet, which is where the hex lives.
+    """
+    doc = manual_html()
+    palette = {name: "#" + hex_.upper() for name, hex_ in
+               re.findall(r"\.(cm\d+)\s*\{ background: #([0-9A-Fa-f]{6}); \}",
+                          doc)}
+    frag = section(doc, "color-match")
+    keys, grid = [], []
+    for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", frag, re.S):
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)
+        if not cells:
+            continue
+        keys.append(strip_tags(cells[0]))
+        chips = [re.search(r'class="chip (cm\d+)"', c) for c in cells[1:]]
+        grid.append([palette[m.group(1)] if m else None for m in chips])
+    return keys, grid
+
+
+def color_match_source():
+    """(key words, columns, palette hexes) out of the module's C++."""
+    src = cpp("color_match_puzzle.cpp")
+    keys = re.findall(r'"([A-Z]+)"',
+                      array_body(src, "constexpr const char* key_words"))
+    columns = [[int(n) for n in re.findall(r"\d+", row)]
+               for row in braced_lists(array_body(src, "constexpr int column_map"))]
+    hexes = ["#%02X%02X%02X" % (int(r), int(g), int(b)) for r, g, b in
+             re.findall(r"Color\{\s*(\d+),\s*(\d+),\s*(\d+),\s*255\}",
+                        array_body(src, "constexpr Swatch palette"))]
+    return keys, columns, hexes

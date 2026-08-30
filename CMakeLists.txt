@@ -64,6 +64,7 @@ add_library(panic_game STATIC
     src/puzzles/tape_reader_puzzle.cpp
     src/puzzles/pipeworks_puzzle.cpp
     src/puzzles/star_chart_puzzle.cpp
+    src/puzzles/color_match_puzzle.cpp
     src/puzzles/needy_puzzle.cpp
     src/puzzles/venting_gas_puzzle.cpp
     src/puzzles/capacitor_puzzle.cpp

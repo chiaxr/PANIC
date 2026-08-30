@@ -15,6 +15,7 @@ Exit status is 0 when every check passes, 1 otherwise.
 """
 
 import itertools
+import math
 import os
 import random
 import sys
@@ -600,6 +601,56 @@ def tape_reader():
     if "if (sub_ok && alt == result) omission_safe = false;" not in src:
         fail("tape-reader", "the generator no longer rejects tapes where "
                             "dropping a glyph lands on the same answer")
+
+
+# --- Colour Match -----------------------------------------------------------
+@check("color-match")
+def color_match():
+    """Can the Defuser reach the right colour, and does the widget matter?
+
+    Three separate ways this module could be unfair: two keys naming the same
+    colour in one column (the Expert describes it, either answer counts, and
+    the widget teaches the pair nothing), a key that keeps its colour across
+    two battery columns (misreading the widget is then sometimes harmless, so
+    the widget is decoration), and a colour whose region on the wheel is too
+    small to hit. The palette's own colour-space constraints are checked by
+    scripts/color_palette.py; this is the gameplay half.
+    """
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import color_palette as CP
+
+    keys, columns, _hexes = P.color_match_source()
+    palette = CP.load_palette()
+
+    for c, column in enumerate(columns):
+        if len(set(column)) != len(column):
+            fail("color-match", "column %d gives two keys the same colour: %s"
+                                % (c, column))
+    for c in range(len(columns)):
+        for d in range(c + 1, len(columns)):
+            same = [keys[k] for k in range(len(keys))
+                    if columns[c][k] == columns[d][k]]
+            if same:
+                fail("color-match", "key(s) %s keep their colour between "
+                                    "columns %d and %d" % (same, c, d))
+
+    # A pick is graded by which entry it lands nearest to on the wheel, so
+    # every colour owns a region at least half the distance to its closest
+    # neighbour. Under a tenth of the radius would be a pixel hunt rather than
+    # a description.
+    for i in range(len(palette)):
+        closest = min(CP.wheel_gap(palette[i][:2], palette[j][:2])
+                      for j in range(len(palette)) if j != i)
+        slack = 0.5 * closest
+        if slack < 0.10:
+            fail("color-match", "entry %d owns only %.0f%% of the wheel's "
+                                "radius" % (i, slack * 100.0))
+
+    # And the answer has to be reachable at all: an entry outside the wheel the
+    # module draws could never be picked.
+    for i, (_hue, radius, _rgb) in enumerate(palette):
+        if radius > 1.0 + CP.ROUNDING:
+            fail("color-match", "entry %d sits outside the wheel" % i)
 
 
 # --- Needy modules ----------------------------------------------------------
