@@ -194,6 +194,9 @@ private:
     // How far the module list is scrolled, in pixels. The template pool
     // outgrew the panel, so the picker's body scrolls.
     float debug_scroll_ = 0.0f;
+    // The same, for the instructions body: a window too small to hold it in
+    // one screen scrolls rather than cutting the last section off.
+    float instr_scroll_ = 0.0f;
 
     // The run's seed. The serial the players type, together with the module
     // count, seeds everything about the bomb, so the same pair always replays

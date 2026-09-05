@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>PANIC - Puzzles Always Need Immediate Communication</title>
     <meta name="description" content="A co-op bomb defusal game: one player sees the bomb, the other reads the manual. Talk fast.">
     <link rel="canonical" href="https://chiaxr.github.io/PANIC/">
@@ -28,11 +28,18 @@
         html, body {
             margin: 0; padding: 0; height: 100%; background: #121316; color: #e6e8ec;
             font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-            overflow: hidden;
+            overflow: hidden; overscroll-behavior: none;
+            -webkit-user-select: none; user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
+        /* The canvas fills a fixed, inset container rather than being sized in
+           vh units: on mobile Safari 100vh is the viewport with the URL bar
+           hidden, while raylib sizes its framebuffer from window.innerHeight,
+           and the mismatch would scale the picture. Emscripten strips any
+           inline size it finds here, so the sizing has to live in CSS. */
         #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
         canvas.emscripten {
-            display: block; width: 100vw; height: 100vh; border: 0;
+            display: block; width: 100%; height: 100%; border: 0;
             image-rendering: auto; touch-action: none; outline: none;
         }
         #rotate {
@@ -41,10 +48,11 @@
             background: #121316; padding: 24px;
         }
         #rotate p { font-size: 1.1rem; color: #b6bcc8; max-width: 20rem; line-height: 1.5; }
+        /* Bottom-left: the top corners and the bottom centre all carry HUD. */
         #manual-link {
-            position: fixed; top: 10px; right: 14px; z-index: 20;
-            font-size: 0.85rem; color: #8a90a0; text-decoration: none;
-            background: rgba(0,0,0,0.35); padding: 6px 10px; border-radius: 6px;
+            position: fixed; left: 10px; bottom: 8px; z-index: 20;
+            font-size: 0.8rem; color: #8a90a0; text-decoration: none;
+            background: rgba(0,0,0,0.35); padding: 5px 9px; border-radius: 6px;
         }
         #manual-link:hover { color: #e6e8ec; }
     </style>
@@ -58,7 +66,7 @@
 
     <script type="text/javascript">
         var Module = {
-            canvas: (function () { return document.getElementById('canvas'); })(),
+            canvas: document.getElementById('canvas'),
             // Optional orientation hook consulted by the C++ web loop.
             __panicIsPortrait: function () {
                 var portrait = window.innerHeight > window.innerWidth;
