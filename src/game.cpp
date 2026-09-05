@@ -838,8 +838,13 @@ int Game::pick_module(Vector2 screen_pos, Vector2& out_module_pixel) const {
         if (!slots[i].puzzle) continue;   // only interactive modules are pickable
         const FaceQuad& q = slots[i].quad;
 
+        // Only a face turned towards the camera is pickable: a negative
+        // dot means the ray runs into the front of the quad. Without this a
+        // tap that misses the near modules carries on through the casing and
+        // lands on a bay on the far side, which reads as clicking through the
+        // bomb.
         const float denom = Vector3DotProduct(ld, q.normal);
-        if (std::fabs(denom) < 1e-6f) continue;
+        if (denom > -1e-6f) continue;
         const float t =
                 Vector3DotProduct(Vector3Subtract(q.center, lo), q.normal) / denom;
         if (t <= 0.0f || t >= best_t) continue;
@@ -1022,37 +1027,53 @@ void Game::begin_focus(int slot_index) {
 
     // Turn the bay's outward normal towards the camera: front bays need no
     // yaw, back bays a half turn, and the pitch always flattens out.
-    focus_pitch_ = 0.0f;
+    focus_to_pitch_ = 0.0f;
     const float face_yaw = (q.normal.z >= 0.0f) ? 0.0f : PI;
-    focus_yaw_ = yaw_ + wrap_pi(face_yaw - yaw_);
+    focus_to_yaw_ = yaw_ + wrap_pi(face_yaw - yaw_);
 
     // Where that leaves the module in world space, and how far back the camera
     // has to sit for the face to fill most of the viewport height.
-    const Matrix m = pose_matrix(focus_yaw_, focus_pitch_);
-    focus_cam_target_ = Vector3Transform(q.center, m);
+    const Matrix m = pose_matrix(focus_to_yaw_, focus_to_pitch_);
+    focus_to_cam_target_ = Vector3Transform(q.center, m);
     const float dist = q.half_h / std::tan(camera_.fovy * 0.5f * DEG2RAD) *
                        focus_zoom_margin;
-    focus_cam_pos_ =
-        Vector3Add(focus_cam_target_, Vector3{0.0f, 0.0f, dist});
+    focus_to_cam_pos_ =
+        Vector3Add(focus_to_cam_target_, Vector3{0.0f, 0.0f, dist});
 
-    // Re-aim the interpolation from wherever the camera currently is.
-    if (focus_t_ <= 0.0f) focus_t_ = 0.0f;
+    start_focus_move();
 }
 
 void Game::end_focus() {
     // Keep focused_slot_ set until the move home finishes; update_focus clears
-    // it, which is also what keeps free-look locked until then.
+    // it, which is also what keeps free-look locked until then. A move already
+    // heading home is left alone rather than restarted from where it has got
+    // to.
+    if (focused_slot_ < 0 || !focusing_) return;
     focusing_ = false;
+
+    // Home is the free-look pose the player came in from, taking the short way
+    // round in yaw: a hop between bays can have wound the bomb most of a turn
+    // away from it.
+    focus_to_yaw_ = yaw_ + wrap_pi(free_yaw_ - yaw_);
+    focus_to_pitch_ = free_pitch_;
+    focus_to_cam_pos_ = free_camera_pos(view_dist_);
+    focus_to_cam_target_ = camera_free_target;
+
+    start_focus_move();
+}
+
+// Anchor a focus move at wherever the camera is right now and run the tween
+// from the top. Both directions go through here, which is what keeps a move
+// that interrupts another one continuous.
+void Game::start_focus_move() {
+    focus_from_yaw_ = yaw_;
+    focus_from_pitch_ = pitch_;
+    focus_from_cam_pos_ = camera_.position;
+    focus_from_cam_target_ = camera_.target;
+    focus_t_ = 0.0f;
 }
 
 void Game::update_focus(float dt) {
-    const float target = focusing_ ? 1.0f : 0.0f;
-    if (focus_t_ < target) {
-        focus_t_ = std::min(target, focus_t_ + dt / focus_time);
-    } else if (focus_t_ > target) {
-        focus_t_ = std::max(target, focus_t_ - dt / focus_time);
-    }
-
     if (focused_slot_ < 0) {
         // Free look: straight back from the bomb's centre, at the zoom the
         // player has dialled in.
@@ -1061,14 +1082,21 @@ void Game::update_focus(float dt) {
         return;
     }
 
-    const float s = smoothstep01(focus_t_);
-    yaw_ = Lerp(free_yaw_, focus_yaw_, s);
-    pitch_ = Lerp(free_pitch_, focus_pitch_, s);
-    camera_.position =
-        Vector3Lerp(free_camera_pos(view_dist_), focus_cam_pos_, s);
-    camera_.target = Vector3Lerp(camera_free_target, focus_cam_target_, s);
+    focus_t_ = std::min(1.0f, focus_t_ + dt / focus_time);
 
-    if (!focusing_ && focus_t_ <= 0.0f) focused_slot_ = -1;
+    const float s = smoothstep01(focus_t_);
+    yaw_ = Lerp(focus_from_yaw_, focus_to_yaw_, s);
+    pitch_ = Lerp(focus_from_pitch_, focus_to_pitch_, s);
+    camera_.position = Vector3Lerp(focus_from_cam_pos_, focus_to_cam_pos_, s);
+    camera_.target =
+        Vector3Lerp(focus_from_cam_target_, focus_to_cam_target_, s);
+
+    if (!focusing_ && focus_t_ >= 1.0f) {
+        focused_slot_ = -1;
+        yaw_ = wrap_pi(yaw_);
+        free_yaw_ = yaw_;
+        free_pitch_ = pitch_;
+    }
 }
 
 bool Game::consume_tap(Vector2& out_pos) {
@@ -1152,7 +1180,7 @@ void Game::start_round() {
 
     focused_slot_ = -1;
     focusing_ = false;
-    focus_t_ = 0.0f;
+    focus_t_ = 1.0f;
     free_yaw_ = yaw_;
     free_pitch_ = pitch_;
     camera_.position = free_camera_pos(view_dist_);

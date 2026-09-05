@@ -53,6 +53,9 @@ private:
     // Module focus: align the bomb so a bay faces the camera and zoom in on it.
     void begin_focus(int slot_index);
     void end_focus();
+    // Anchor the pending focus move at the camera's current pose and restart
+    // its tween, so one move interrupting another stays continuous.
+    void start_focus_move();
     void update_focus(float dt);
     // True once the focus move has settled, i.e. components accept input.
     bool focus_settled() const;
@@ -159,15 +162,26 @@ private:
 
     // Module focus. focused_slot_ stays set while the move animates back out,
     // so free-look rotation stays locked until the camera is home again.
+    //
+    // Every move -- in, out, or from one bay straight to the next -- is the
+    // same tween: focus_t_ runs 0 -> 1 between a *captured* from-state and the
+    // to-state, rather than tracking a single "how focused am I" value. That is
+    // what lets a tap on a neighbouring bay glide there: the move starts from
+    // wherever the camera happens to be instead of snapping to the end of the
+    // previous one.
     int focused_slot_ = -1;
     bool focusing_ = false;
-    float focus_t_ = 0.0f;      // 0 = free look, 1 = fully focused
+    float focus_t_ = 1.0f;      // 1 = the current move has finished
     float free_yaw_ = 0.5f;     // rotation to return to when unfocusing
     float free_pitch_ = -0.15f;
-    float focus_yaw_ = 0.0f;
-    float focus_pitch_ = 0.0f;
-    Vector3 focus_cam_pos_{};
-    Vector3 focus_cam_target_{};
+    float focus_from_yaw_ = 0.0f;
+    float focus_from_pitch_ = 0.0f;
+    Vector3 focus_from_cam_pos_{};
+    Vector3 focus_from_cam_target_{};
+    float focus_to_yaw_ = 0.0f;
+    float focus_to_pitch_ = 0.0f;
+    Vector3 focus_to_cam_pos_{};
+    Vector3 focus_to_cam_target_{};
 
     // Round state.
     State state_ = State::MENU;
