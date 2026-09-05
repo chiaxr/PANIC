@@ -60,9 +60,11 @@ class Bomb {
     // templates, and create render targets. Call after the window/GL context
     // exists.
     //
-    // `rng` must already be seeded from the serial and difficulty: the same
-    // serial and module count always builds the same bomb. `module_count` is
-    // how many of the six bays get a module.
+    // `rng` must already be seeded from the serial alone: the same serial
+    // always builds the same bomb. `module_count` is how many of the six bays
+    // get a module, and it only decides how many -- the modules a bomb can
+    // hold, and the bays they sit in, come from the serial, so raising the
+    // count adds a bay and leaves the rest of the bomb untouched.
     //
     // `only_module`, when non-null, names a single template to put in the
     // front-centre bay on its own, leaving every other bay empty. Debug mode
@@ -106,8 +108,11 @@ class Bomb {
     int solved_module_count() const;
 
 private:
-    void build_slots(std::mt19937& rng, int module_count,
-                     const char* only_module);
+    // Fill the bays and report the slot indices of the modules placed, in the
+    // rank order they must be initialised in. See the comment in the .cpp:
+    // rank order is what keeps a module's variables fixed as the count grows.
+    std::vector<size_t> build_slots(std::mt19937& rng, int module_count,
+                                    const char* only_module);
     void build_info_panels();
     void draw_info_panel(const InfoPanel& panel) const;
     // The slab, drawn as several boxes so the top rim can carry a real recess.

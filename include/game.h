@@ -17,8 +17,10 @@
 // limit and no detonation, so a module can be exercised on its own.
 //
 // The title screen carries the run's seed: a serial number the players can type
-// and a difficulty slider setting the module count. Together those seed every
-// random choice the bomb makes, so the same pair replays the same bomb exactly.
+// and a difficulty slider setting the module count. The serial alone seeds
+// every random choice the bomb makes, so it replays the same bomb exactly; the
+// slider only says how many of its bays are filled, and raising it adds
+// modules without disturbing the ones already there.
 
 #include <random>
 #include <string>

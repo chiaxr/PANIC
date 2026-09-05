@@ -173,10 +173,6 @@ constexpr int instr_section_gap = 14;
 constexpr int instr_col_gap = 28;
 constexpr int instr_link_h = 46;
 
-// A debug round's seed is the serial alone; this stands in for the difficulty
-// the picker deliberately does not offer.
-constexpr int debug_seed_difficulty = 0;
-
 // Debug mode's way in: a small, quiet button in the title screen's
 // bottom-right corner. It is a development tool, so it stays clear of the two
 // things a player actually needs.
@@ -209,14 +205,13 @@ struct DialogLayout {
     int bh = 0;
 };
 
-// Build the bomb's engine from the run's seed. Mixing the difficulty in means
-// the same serial at a different module count is a genuinely different bomb,
-// which is what players expect from a difficulty setting.
-std::mt19937 seeded_engine(const std::string& serial, int difficulty) {
+// Build the bomb's engine from the run's seed. The serial is the whole seed:
+// the difficulty says how many bays to fill, never what goes in them, so one
+// serial names one bomb and the slider only decides how much of it is built.
+std::mt19937 seeded_engine(const std::string& serial) {
     std::vector<std::uint32_t> data;
-    data.reserve(serial.size() + 1);
+    data.reserve(serial.size());
     for (char c : serial) data.push_back(static_cast<std::uint32_t>(c));
-    data.push_back(static_cast<std::uint32_t>(difficulty));
     std::seed_seq seq(data.begin(), data.end());
     return std::mt19937(seq);
 }
@@ -597,8 +592,8 @@ constexpr InstrSection instr_sections[] = {
     {"Objective",
      {"Disarm every module before the countdown reaches zero.",
       "Three strikes and the bomb detonates.",
-      "The serial and difficulty on the title screen build the bomb:",
-      "note them down to replay the same one."}},
+      "The serial on the title screen builds the bomb: note it down",
+      "to replay the same one. Difficulty only adds modules to it."}},
     {"Two players, one manual",
      {"Defuser  -  holds the bomb, has no instructions.",
       "Expert   -  reads the manual, cannot see the bomb.",
@@ -787,12 +782,9 @@ void Game::setup() {
 
 void Game::rebuild_bomb() {
     bomb_.unload();
-    // A debug round replaces the whole layout with the one module under test,
-    // and takes the difficulty out of its seed: the slider is not on the debug
-    // picker, so leaving it in would make the same serial build a different
-    // module depending on a setting that screen never shows.
+    // A debug round replaces the whole layout with the one module under test.
     const bool debug = !debug_module_.empty();
-    rng_ = seeded_engine(serial_, debug ? debug_seed_difficulty : difficulty_);
+    rng_ = seeded_engine(serial_);
     bomb_.setup(rng_, serial_, difficulty_,
                 debug ? debug_module_.c_str() : nullptr);
 
@@ -1797,8 +1789,8 @@ void Game::draw_menu() const {
     }
 
     draw_centered_text(
-        "Click the serial to edit   -   the same serial and difficulty "
-        "always builds the same bomb",
+        "Click the serial to edit   -   the same serial always builds the "
+        "same bomb, difficulty only adds modules to it",
         m.footer_y, m.hint_size, col_hint);
 
     // Quiet corner button into debug mode.
@@ -2101,10 +2093,8 @@ void Game::draw_hud() const {
     DrawText(prog, sw - margin - MeasureText(prog, sf(22)), su(24), sf(22),
              col_text_dim);
 
-    // The seed that built this bomb, so it can be noted down and replayed. Both
-    // halves are needed: the serial alone does not identify the bomb.
-    const char* seed = TextFormat("SEED   %s  /  %d", serial_.c_str(),
-                                  difficulty_);
+    // The seed that built this bomb, so it can be noted down and replayed.
+    const char* seed = TextFormat("SEED   %s", serial_.c_str());
     DrawText(seed, sw - margin - MeasureText(seed, sf(18)),
              su(24) + sf(22) + su(10), sf(18), col_hint);
 

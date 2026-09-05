@@ -10,11 +10,12 @@ PANIC is a small 3D bomb-defusal game inspired by *Keep Talking and Nobody Explo
 
 ## Gameplay
 
-The title screen carries the run's seed: a **bomb serial number** and a **difficulty slider**.
-Together they seed everything about the bomb — its attributes, which modules spawn, where they sit,
-and each module's own variables — so noting the pair down replays exactly the same bomb. The box
-starts with a randomly generated serial; click it to edit. Difficulty sets how many of the six bays
-are filled, from 1 to 6.
+The title screen carries the run's seed: a **bomb serial number**. It determines everything about the bomb — its attributes, which modules spawn, where they sit, and each module's own variables —
+so noting it down replays exactly the same bomb. The box starts with a randomly generated serial;
+click it to edit.
+
+The **difficulty slider** sets how many of the six bays are filled. For a fixed serial number, raising the difficulty adds the next
+module to the bomb while leaving the existing modules unchanged — so a pair can learn a bomb a module at a time.
 
 Rotate the bomb to inspect its faces and read the widgets aloud to your Expert. Each **module**
 must be disarmed before the countdown reaches zero. Three **strikes** and the bomb detonates.
@@ -49,8 +50,7 @@ A bomb fills as many bays as the difficulty asks for, drawn at random without re
 | Star Chart | Identifies a rotated constellation and presses the star it names |
 | Colour Match | Finds a colour the Expert can only describe, on an Oklab colour wheel |
 
-At difficulty 3 and above, up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not
-counted in the module total — they wake up periodically for the whole round and demand attention:
+At difficulty 3 and above, up to one bay holds a **needy** module instead. Needy modules are never disarmed and are not counted in the module total — they wake up periodically for the whole round and demand attention:
 
 | Needy module | What the Defuser does |
 | --- | --- |
@@ -222,13 +222,17 @@ Defuser can actually see and read aloud.
 
 ### 4. Keep it deterministic
 
-A serial number and difficulty must always rebuild exactly the same bomb, so:
+A serial number must always rebuild exactly the same bomb, and raising the difficulty must only
+add to it, so:
 
 - Take all randomness from the `rng` handed to `init()`. Never use `std::random_device`, and never
   use an unseeded engine.
 - If the module needs randomness *during play* (dealing a later stage, picking a wake-up time),
   keep a `std::mt19937` member seeded from that `rng` in `init()` — not a function-local `static`.
 - Read the clock and strike count from the `BombContext` passed to `update()`, not from globals.
+- Draw a fixed number of values from `rng` in `init()`, whatever the module's variables turn out
+  to be. Modules are initialised in the order the bays fill, so a module that varies how much it
+  draws would shift the variables of every module placed after it.
 
 ### 5. Needy modules (optional)
 

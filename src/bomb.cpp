@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "raylib.h"
@@ -90,6 +91,15 @@ constexpr float face_offset = 0.01f;    // push quads just outside the casing
 constexpr std::array<float, 3> slot_x = {-1.40f, 0.0f, 1.40f};
 constexpr size_t slot_count = 6;   // three front bays, three back
 
+// The order bays are filled in as the module count rises: the front face
+// first, then the back, and each face from the middle outwards, left before
+// right. Indices are into `slots_`, which holds the three front bays in
+// ascending local X and then the three back ones. The back face's quad faces
+// -Z, so a defuser turning the bomb over sees its local +X bay on their left:
+// the back is listed 4, 5, 3 to read middle, left, right from where they
+// stand, the same as the front's 1, 0, 2.
+constexpr std::array<size_t, slot_count> fill_order = {1, 0, 2, 4, 5, 3};
+
 // Battery compartment: a rectangular recess milled into the left end of the top
 // rim, split by dividers into `battery_slot_count` cell wells. The cells are
 // real cylinders lying along Z that stand proud of the casing; a well with no
@@ -145,9 +155,6 @@ constexpr std::array<const char*, 19> module_templates = {
     "Knobs",
 };
 
-// Needy modules are never disarmed, so a bomb built only from them could never
-// be defused. Cap them so at least five bays are solvable.
-constexpr int max_needy_modules = 1;
 
 Color casing_color(BombColor c) {
     switch (c) {
@@ -337,11 +344,18 @@ void Bomb::setup(std::mt19937& rng, const std::string& serial, int module_count,
     register_builtin_puzzles();
 
     attrs_ = BombAttributes::random(rng, serial);
-    build_slots(rng, module_count, only_module);
+    const std::vector<size_t> init_order =
+        build_slots(rng, module_count, only_module);
     build_info_panels();
 
+    // Modules are initialised in rank order rather than bay order, and every
+    // draw made before this point takes the same number of values whatever
+    // the module count. Rank N therefore always meets the rng in the same
+    // state, so adding a module to a bomb cannot change the variables of the
+    // ones already on it.
+    for (size_t slot : init_order) slots_[slot].puzzle->init(attrs_, rng);
+
     for (auto& slot : slots_) {
-        if (slot.puzzle) slot.puzzle->init(attrs_, rng);
         slot.quad.tex = LoadRenderTexture(module_tex_size, module_tex_size);
         slot.quad.tex_valid = true;
     }
@@ -383,8 +397,8 @@ void Bomb::unload() {
     pending_.clear();
 }
 
-void Bomb::build_slots(std::mt19937& rng, int module_count,
-                       const char* only_module) {
+std::vector<size_t> Bomb::build_slots(std::mt19937& rng, int module_count,
+                                      const char* only_module) {
     slots_.clear();
 
     auto make_slot = [](float x, bool front, std::unique_ptr<Puzzle> puzzle) {
@@ -411,47 +425,68 @@ void Bomb::build_slots(std::mt19937& rng, int module_count,
             const bool front = i < slot_x.size();
             slots_.push_back(make_slot(
                 slot_x[i % slot_x.size()], front,
-                i == 1 ? reg.create(only_module) : nullptr));
+                i == fill_order[0] ? reg.create(only_module) : nullptr));
         }
-        return;
+        return {fill_order[0]};
     }
 
-    // Draw six distinct templates for the six bays. Bays go empty only while
-    // there are fewer than six templates registered.
+    // Rank six distinct templates for the six bays. This draw is made in full
+    // whatever the module count asks for, so the ranking -- and every value it
+    // takes from the rng -- depends on the serial alone. The count only says
+    // where to cut the list. Bays go empty only while there are fewer than six
+    // templates registered.
     std::vector<const char*> pool(module_templates.begin(),
                                   module_templates.end());
     std::shuffle(pool.begin(), pool.end(), rng);
 
-    // How many bays to fill, and how many of those may be needy: a bomb needs
-    // at least one module that can actually be disarmed, so the smallest bombs
-    // get no needy module at all.
+    std::vector<std::unique_ptr<Puzzle>> ranked;
+    size_t needy_rank = slot_count;    // slot_count: none on the list
+    for (const char* name : pool) {
+        if (ranked.size() >= slot_count) break;
+        std::unique_ptr<Puzzle> puzzle = reg.create(name);
+        if (!puzzle) continue;
+        // Needy modules are never disarmed, so a bomb built only from them
+        // could never be defused: one is the limit, which leaves at least
+        // five bays solvable.
+        if (puzzle->is_needy()) {
+            if (needy_rank < slot_count) continue;
+            needy_rank = ranked.size();
+        }
+        ranked.push_back(std::move(puzzle));
+    }
+
+    // A bomb needs modules that can actually be disarmed, so the needy one
+    // never appears on the smallest bombs. Demoting it to rank `first_needy`
+    // rather than dropping it keeps every longer prefix holding the same set,
+    // which is what makes one step up the slider purely additive.
+    constexpr size_t first_needy = 3 - 1;
+    if (needy_rank < first_needy && ranked.size() > first_needy) {
+        std::swap(ranked[needy_rank], ranked[first_needy]);
+    }
+
     const size_t wanted = static_cast<size_t>(
         module_count < 1 ? 1 : (module_count > static_cast<int>(slot_count)
                                     ? static_cast<int>(slot_count)
                                     : module_count));
-    const int needy_allowed = wanted >= 3 ? max_needy_modules : 0;
+    ranked.resize(slot_count);   // pads with nullptr if templates run short
 
-    std::vector<std::unique_ptr<Puzzle>> chosen;
-    int needy = 0;
-    for (const char* name : pool) {
-        if (chosen.size() >= wanted) break;
-        std::unique_ptr<Puzzle> puzzle = reg.create(name);
-        if (!puzzle) continue;
-        if (puzzle->is_needy()) {
-            if (needy >= needy_allowed) continue;
-            ++needy;
-        }
-        chosen.push_back(std::move(puzzle));
+    // Cut the ranking to the count and seat it, filling `fill_order`'s bays in
+    // order. Where a rank sits is fixed, so a module keeps its bay as the cut
+    // moves.
+    std::vector<std::unique_ptr<Puzzle>> by_bay(slot_count);
+    std::vector<size_t> init_order;
+    for (size_t rank = 0; rank < wanted; ++rank) {
+        if (!ranked[rank]) continue;
+        const size_t bay = fill_order[rank];
+        by_bay[bay] = std::move(ranked[rank]);
+        init_order.push_back(bay);
     }
-    chosen.resize(slot_count);   // pads with nullptr: empty bays
-    std::shuffle(chosen.begin(), chosen.end(), rng);
 
-    slots_.push_back(make_slot(slot_x[0], true, std::move(chosen[0])));
-    slots_.push_back(make_slot(slot_x[1], true, std::move(chosen[1])));
-    slots_.push_back(make_slot(slot_x[2], true, std::move(chosen[2])));
-    slots_.push_back(make_slot(slot_x[0], false, std::move(chosen[3])));
-    slots_.push_back(make_slot(slot_x[1], false, std::move(chosen[4])));
-    slots_.push_back(make_slot(slot_x[2], false, std::move(chosen[5])));
+    for (size_t i = 0; i < slot_count; ++i) {
+        slots_.push_back(make_slot(slot_x[i % slot_x.size()],
+                                   i < slot_x.size(), std::move(by_bay[i])));
+    }
+    return init_order;
 }
 
 void Bomb::build_info_panels() {
